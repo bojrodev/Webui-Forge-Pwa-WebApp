@@ -22,3 +22,7 @@ I built a "Vanilla" JavaScript application that interfaces with the Stable Diffu
 1.  **Configure PC:** Launch Stable Diffusion Forge with `--listen --api --cors-allow-origins *` on Command line arguement on webui-user.bat.
 2.  **Run Sidecar:** Edit `python vae_sidecar.py` with your favourite ide and change the Vae path to your webui's Vae location, then save & Run `python vae_sidecar.py` on the PC to enable file scanning.
 3.  **Launch App:** Open `index.html` on any device on the same Wi-Fi network.
+
+## ©redit
+1.  **Backend:** BojroDev
+2.  **Frontend:** Marjuk06
