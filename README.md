@@ -6,11 +6,11 @@ A custom-built Progressive Web App (PWA) designed to act as a mobile-friendly re
 The default interface for Stable Diffusion is designed for desktop mouse usage and does not scale well to mobile screens. Additionally, managing server-side files from a phone is typically impossible due to browser sandboxing security.
 
 ## ⛈ The Solution
-I built a "Vanilla" JavaScript application that interfaces with the Stable Diffusion API. It features:
+We built a "Vanilla" JavaScript application that interfaces with the Stable Diffusion API. It features:
 * **Mobile-First Design:** A responsive, dark-mode UI optimized for touch.
 * **Python Sidecar:** A custom Python script (`vae_sidecar.py`) that bridges the browser's security sandbox, allowing the web app to scan and list files on the host PC's hard drive.
 * **Flux Support:** Still none! Working on it.
-* * **SDXL Support:** Supported!
+* **SDXL Support:** Supported!
 * **PWA Capable:** Can be installed natively on Android/iOS home screens.
 
 ## 🛠️ Tech Stack
@@ -24,5 +24,5 @@ I built a "Vanilla" JavaScript application that interfaces with the Stable Diffu
 3.  **Launch App:** Open `index.html` on any device on the same Wi-Fi network.
 
 ## ©redit
-1.  **Backend:** BojroDev
+1.  **Backend & Communication:** BojroDev
 2.  **Frontend:** Marjuk06
