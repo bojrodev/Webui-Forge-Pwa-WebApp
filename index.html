@@ -9,8 +9,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <link rel="manifest" href="manifest.json">
     <link rel="manifest" id="dynamic-manifest">
-    <link rel="apple-touch-icon" id="apple-icon">
+    <link rel="apple-touch-icon" id="apple-icon" href="icon.png">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -28,7 +30,7 @@
     <div id="view-gen">
         
         <div id="connBar" class="row">
-            <input type="text" id="hostIp" value="Enter webui ip (eg: http://127.0.0.1:7860) ">
+            <input type="text" id="hostIp" value="http://192.168.0.139:7860">
             <button onclick="connect()" class="btn-small">LINK</button>
             <div id="statusDot" class="indicator"></div>
         </div>
