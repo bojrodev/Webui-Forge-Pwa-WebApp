@@ -18,6 +18,19 @@
     
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css">
+    
+    <style>
+        .queue-section { margin-bottom: 20px; }
+        .queue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--input-border); }
+        .queue-label { font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .queue-zone { min-height: 60px; background: rgba(0,0,0,0.1); border-radius: 8px; padding: 5px; border: 1px dashed var(--input-border); transition: background 0.2s; }
+        .queue-zone.drag-over { background: rgba(0, 230, 118, 0.1); border-color: #00e676; }
+        .q-card { background: var(--glass-panel); border: 1px solid var(--glass-border); padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; touch-action: none; }
+        .q-card.dragging { opacity: 0.5; transform: scale(0.98); }
+        .q-handle { color: var(--text-muted); margin-right: 10px; cursor: grab; }
+        .q-details { flex: 1; }
+        .q-meta { font-size: 10px; color: var(--text-muted); }
+    </style>
 </head>
 <body>
 
@@ -225,14 +238,6 @@
         </div>
 
         <div id="view-que" class="hidden">
-            <div class="row" style="justify-content: space-between; margin-bottom: 15px;">
-                <label style="font-size: 14px; color: var(--accent-secondary); font-weight: 900;">BATCH QUEUE</label>
-                <div style="display:flex; gap:10px;">
-                    <button onclick="clearQueue()" class="btn-small" style="background: #f44336;">CLEAR ALL</button>
-                    <button onclick="processQueue()" id="startQueueBtn" class="btn-small" style="background: var(--accent-gradient); color: white; border: none; box-shadow: 0 4px 10px var(--accent-glow);">START BATCH</button>
-                </div>
-            </div>
-            
             <div id="queueProgressBox" class="glass-box hidden" style="padding: 10px; margin-bottom: 10px;">
                 <div class="row" style="justify-content: space-between;">
                     <label style="color: var(--text-main);">Batch Progress</label>
@@ -240,8 +245,31 @@
                 </div>
             </div>
 
-            <div id="queueListContainer">
-                <div style="text-align:center; color:var(--text-muted); margin-top:50px;">Queue Empty</div>
+            <div class="queue-section">
+                <div class="queue-header">
+                    <span class="queue-label" style="color:var(--accent-primary);">ONGOING / ACTIVE</span>
+                    <div style="display:flex; gap:5px;">
+                         <button onclick="processQueue()" id="startQueueBtn" class="btn-small" style="background: var(--accent-gradient); color: white; border: none; padding: 4px 10px; font-size: 10px;">START BATCH</button>
+                         <button onclick="clearQueueSection('ongoing')" class="btn-small" style="font-size: 10px; padding: 4px 8px; width:auto;">CLEAR</button>
+                    </div>
+                </div>
+                <div id="list-ongoing" class="queue-zone" ondrop="drop(event, 'ongoing')" ondragover="allowDrop(event)"></div>
+            </div>
+
+            <div class="queue-section">
+                <div class="queue-header">
+                    <span class="queue-label">NEXT QUEUE</span>
+                    <button onclick="clearQueueSection('next')" class="btn-small" style="font-size: 10px; padding: 4px 8px; width:auto;">CLEAR</button>
+                </div>
+                <div id="list-next" class="queue-zone" ondrop="drop(event, 'next')" ondragover="allowDrop(event)"></div>
+            </div>
+
+            <div class="queue-section">
+                <div class="queue-header">
+                    <span class="queue-label" style="color: #00e676;">COMPLETED</span>
+                    <button onclick="clearQueueSection('completed')" class="btn-small" style="font-size: 10px; padding: 4px 8px; width:auto;">CLEAR</button>
+                </div>
+                <div id="list-completed" class="queue-zone" style="border-style: solid; border-color: transparent; background: transparent;"></div>
             </div>
         </div>
 
@@ -301,6 +329,20 @@
         </div>
     </div>
 
+    <div id="batteryModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 300px; text-align: center;">
+            <div style="margin-bottom: 15px;">
+                <i data-lucide="battery-charging" size="32" color="#00e676"></i>
+            </div>
+            <h3 style="margin-bottom: 10px;">Enable Background Mode</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">
+                To prevent Android from killing your generation when the screen is off, Resolver needs to ignore battery optimizations.
+            </p>
+            <button onclick="requestBatteryPerm()" class="btn-small" style="background: var(--accent-gradient); color: white; margin-bottom: 10px;">ENABLE (RECOMMENDED)</button>
+            <button onclick="skipBatteryPerm()" class="btn-small" style="background: transparent; color: var(--text-muted);">SKIP FOR NOW</button>
+        </div>
+    </div>
+
     <div id="llmModal" class="modal hidden">
         <div class="modal-content" style="max-height: 90vh;">
             <div class="modal-header">
@@ -330,7 +372,7 @@
                     <div class="col" style="margin-top:5px; gap:8px;">
                         
                         <div class="row">
-                            <input type="text" id="llmApiBase" placeholder="http://192.xxx.x.x:1234">
+                            <input type="text" id="llmApiBase" placeholder="http://192.xxx.x.xxx:1234">
                             <button onclick="connectToLlm()" class="btn-small" style="width: auto;">LINK</button>
                         </div>
 
