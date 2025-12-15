@@ -1374,12 +1374,29 @@ window.generate = async function() {
     await sendCompletionNotification("Generation Complete: Image Ready");
 }
 
-window.clearGenResults = function() { document.getElementById('gallery').innerHTML = ''; }
+window.clearGenResults = function() { 
+    if(currentTask === 'inp') {
+        const gal = document.getElementById('inpGallery');
+        if(gal) gal.innerHTML = '';
+    } else {
+        const gal = document.getElementById('gallery');
+        if(gal) gal.innerHTML = ''; 
+    }
+}
 
 async function runJob(job, isBatch = false) {
-    const btnId = currentTask === 'inp' ? 'inpGenBtn' : 'genBtn';
+    // --- UPDATED ISOLATION LOGIC ---
+    const isInpaintJob = job.mode === 'inp';
+    
+    // Select specific elements based on job mode
+    const btnId = isInpaintJob ? 'inpGenBtn' : 'genBtn';
+    const spinnerId = isInpaintJob ? 'inpLoadingSpinner' : 'loadingSpinner';
+    const galleryId = isInpaintJob ? 'inpGallery' : 'gallery';
+
     const btn = document.getElementById(btnId);
-    const spinner = document.getElementById('loadingSpinner');
+    const spinner = document.getElementById(spinnerId);
+    const gal = document.getElementById(galleryId);
+
     btn.disabled = true; spinner.style.display = 'block';
 
     try {
@@ -1459,7 +1476,6 @@ async function runJob(job, isBatch = false) {
                 img.src = finalB64; img.className = 'gen-result'; img.loading = "lazy";
                 img.onclick = () => window.openFullscreen([finalB64], 0, img, newId);
                 
-                const gal = document.getElementById('gallery');
                 if(gal.firstChild) gal.insertBefore(img, gal.firstChild); else gal.appendChild(img);
                 const autoDl = document.getElementById('autoDlCheck');
                 if(autoDl && autoDl.checked) saveToMobileGallery(finalB64);

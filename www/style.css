@@ -130,7 +130,18 @@ canvas {
 
 /* Utilities */
 .hidden { display: none !important; }
-.container { max-width: 600px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 15px; }
+
+/* FIX: Added flex: 1 to ensure container fills vertical space for centering */
+.container { 
+    max-width: 600px; 
+    margin: 0 auto; 
+    width: 100%; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    flex: 1; 
+}
+
 .row { display: flex; gap: 10px; align-items: center; width: 100%; }
 .col { display: flex; flex-direction: column; gap: 5px; flex: 1; }
 .mb-5 { margin-bottom: 5px; }
