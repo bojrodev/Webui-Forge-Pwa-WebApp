@@ -84,7 +84,7 @@ window.onload = function() {
         setupBackgroundListeners();
         createNotificationChannel(); 
         loadLlmSettings(); 
-        loadPowerSettings(); // <--- NEW: Initialize Power Button Settings
+        loadPowerSettings(); // <--- POWER BUTTON INIT
         
         // Init Inpainting Systems
         initMainCanvas(); 
@@ -1673,26 +1673,24 @@ window.sendPowerSignal = async function() {
     if(Toast) Toast.show({text: 'Sending Wake Signal...', duration: 'short'});
 
     try {
-        // Add /power endpoint to the saved base URL
         const targetUrl = `${serverUrl}/power`;
-        
-        // Use 'no-cors' mode
+
+        // STANDARD FETCH (No-CORS removed to match connect() behavior)
         await fetch(targetUrl, {
-            method: 'POST',
-            mode: 'no-cors' 
+            method: 'POST'
         });
 
-        // Feedback
         if(Toast) Toast.show({text: 'Signal Sent! Starting Services...', duration: 'long'});
         
-        // Keep button active for a moment
         setTimeout(() => {
             btn.classList.remove('active');
         }, 3000);
 
     } catch (error) {
         console.error(error);
-        if(Toast) Toast.show({text: 'Error: Could not reach PC.', duration: 'short'});
+        // Even if it fails (e.g. CORS error but signal sent, or network down),
+        // we display a generic toast because a simple server script might not respond cleanly.
+        if(Toast) Toast.show({text: 'Signal Sent (Or Check Connection)', duration: 'short'});
         btn.classList.remove('active');
     }
 }

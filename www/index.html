@@ -27,35 +27,6 @@
         .q-handle { color: var(--text-muted); margin-right: 10px; cursor: grab; }
         .q-details { flex: 1; }
         .q-meta { font-size: 10px; color: var(--text-muted); }
-
-        /* Power Button Specific Inline Override for small scale integration */
-        #power-btn-mini {
-            width: 40px; 
-            height: 40px; 
-            border-radius: 50%; 
-            border: none;
-            background: radial-gradient(circle, #2a2a2a, #1a1a1a);
-            box-shadow: 0 0 5px rgba(0,0,0,0.5), inset 0 0 2px rgba(255,255,255,0.05);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            -webkit-tap-highlight-color: transparent;
-        }
-        #power-btn-mini .power-icon {
-            font-size: 18px;
-            color: #444;
-            transition: color 0.3s ease, text-shadow 0.3s ease;
-        }
-        #power-btn-mini.active {
-            transform: scale(0.95);
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
-        }
-        #power-btn-mini.active .power-icon {
-            color: #00ff88;
-            text-shadow: 0 0 10px #00ff88;
-        }
     </style>
 </head>
 <body>
@@ -84,9 +55,14 @@
                 <div class="row" style="border-top: 1px solid var(--input-border); border-bottom: 1px solid var(--input-border); padding: 10px 0; margin: 10px 0; justify-content: space-between;">
                     <label style="margin: 0; color: var(--accent-primary); font-weight: 900;">Use Bojro Dev Power On</label>
                     <div class="row" style="width: auto; gap: 12px;">
+                        
                         <button id="power-btn-mini" onclick="sendPowerSignal()">
-                            <div class="power-icon">⏻</div>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="power-svg">
+                                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                                <line x1="12" y1="2" x2="12" y2="12"></line>
+                            </svg>
                         </button>
+
                         <button onclick="togglePowerSettings()" class="btn-icon" style="width: 32px; height: 32px;">
                             <i data-lucide="settings-2" size="16"></i>
                         </button>

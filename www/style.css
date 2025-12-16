@@ -879,7 +879,7 @@ input[readonly], textarea[readonly] {
 
 
 /* =========================================
-   12. BOJRO POWER BUTTON INTEGRATION
+   12. BOJRO POWER BUTTON INTEGRATION (FIXED)
    ========================================= */
 
 #power-btn-mini {
@@ -898,13 +898,16 @@ input[readonly], textarea[readonly] {
     position: relative;
     overflow: hidden;
     margin: 0 auto;
+    padding: 0; /* Ensures SVG is centered */
 }
 
-#power-btn-mini .power-icon {
-    font-size: 20px;
-    color: var(--text-muted); /* Default off color */
-    transition: color 0.3s ease, text-shadow 0.3s ease;
-    z-index: 2;
+/* The Inline SVG Icon */
+.power-svg {
+    width: 22px;
+    height: 22px;
+    color: var(--text-muted); /* Default off color (grey) */
+    transition: color 0.3s ease, filter 0.3s ease;
+    display: block;
 }
 
 /* Active State (ON / Sending) */
@@ -915,18 +918,8 @@ input[readonly], textarea[readonly] {
     box-shadow: 0 0 15px rgba(0, 230, 118, 0.3); /* Green glow */
 }
 
-#power-btn-mini:active .power-icon, #power-btn-mini.active .power-icon {
+/* Turn SVG Green when active */
+#power-btn-mini:active .power-svg, #power-btn-mini.active .power-svg {
     color: var(--success); /* #00e676 */
-    text-shadow: 0 0 10px var(--success);
-}
-
-/* Pulse Animation for Active State */
-@keyframes power-pulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.4); }
-    70% { box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
-}
-
-#power-btn-mini.active {
-    animation: power-pulse 2s infinite;
+    filter: drop-shadow(0 0 4px var(--success));
 }
