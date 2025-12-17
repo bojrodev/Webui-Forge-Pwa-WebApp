@@ -54,12 +54,14 @@
                 <div class="row" style="border-top: 1px solid var(--input-border); border-bottom: 1px solid var(--input-border); padding: 10px 0; margin: 10px 0; justify-content: space-between;">
                     <label style="margin: 0; color: var(--accent-primary); font-weight: 900;">Use Bojro Dev Power On</label>
                     <div class="row" style="width: auto; gap: 12px;">
+                        
                         <button id="power-btn-mini" onclick="sendPowerSignal()">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="power-svg">
                                 <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
                                 <line x1="12" y1="2" x2="12" y2="12"></line>
                             </svg>
                         </button>
+
                         <button onclick="togglePowerSettings()" class="btn-icon" style="width: 32px; height: 32px;">
                             <i data-lucide="settings-2" size="16"></i>
                         </button>
@@ -242,6 +244,21 @@
                         <div class="row mb-5"><span class="label-tag c-p">VAE</span><select id="qwen_vae" class="trident-select" onchange="window.Neo.saveDual()"><option value="">Automatic</option></select></div>
                         <div class="row mb-5"><span class="label-tag c-s">Qwen/TE</span><select id="qwen_te" class="trident-select" onchange="window.Neo.saveDual()"><option value="">None</option></select></div>
                     </div>
+                    <div class="col">
+                        <label>Low Bits</label>
+                        <select id="qwen_bits" onchange="saveSelection('qwen_bits')">
+                            <option value="Automatic (fp16 LoRA)" selected>Automatic (fp16 LoRA)</option>
+                            <option value="Automatic">Automatic</option>
+                            <option value="bnb-nf4">bnb-nf4</option>
+                            <option value="bnb-nf4 (fp16 LoRA)">bnb-nf4 (fp16 LoRA)</option>
+                            <option value="float8-e4m3fn">float8-e4m3fn</option>
+                            <option value="float8-e4m3fn (fp16 LoRA)">float8-e4m3fn (fp16 LoRA)</option>
+                            <option value="bnb-fp4">bnb-fp4</option>
+                            <option value="bnb-fp4 (fp16 LoRA)">bnb-fp4 (fp16 LoRA)</option>
+                            <option value="float8-e5m2">float8-e5m2</option>
+                            <option value="float8-e5m2 (fp16 LoRA)">float8-e5m2 (fp16 LoRA)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="col" style="margin-bottom: 20px;">
@@ -257,11 +274,11 @@
                 <div class="glass-box">
                     <div class="row">
                         <div class="col"><label>Sampler</label><select id="qwen_sampler"><option>LCM</option></select></div>
-                        <div class="col"><label>Schedule</label><select id="qwen_scheduler"><option>Simple</option></select></div>
+                        <div class="col"><label>Schedule</label><select id="qwen_scheduler"><option selected>Normal</option><option>Simple</option></select></div>
                     </div>
                     <div class="row" style="margin-top: 10px;">
                         <div class="col"><label>Steps</label><input type="number" id="qwen_steps" value="8"></div>
-                        <div class="col"><label>CFG</label><input type="number" id="qwen_cfg" value="1.8"></div>
+                        <div class="col"><label>CFG</label><input type="number" id="qwen_cfg" value="1.0"></div>
                     </div>
                     <div class="row" style="margin-top: 10px;">
                         <div class="col"><label>Width</label><input type="number" id="qwen_width" value="1024" step="64"></div>
@@ -326,6 +343,7 @@
             </div>
 
             <div id="canvasWrapper" class="hidden" style="flex:1; display:flex; flex-direction:column; gap:10px;">
+                
                 <div style="position:relative; width:100%; border:1px solid var(--border-color); border-radius:8px; overflow:hidden; background:#000;">
                     <canvas id="paintCanvas" style="display:block; width:100%; touch-action:none;"></canvas>
                     <div style="position:absolute; top:10px; right:10px; display:flex; gap:5px;">
@@ -335,6 +353,7 @@
                 </div>
 
                 <div id="inpaintControls" class="glass-box">
+                    
                     <div class="row" style="justify-content:space-between; margin-bottom:10px;">
                         <label>Tool</label>
                         <div class="row" style="width:auto; gap:5px;">
@@ -346,6 +365,7 @@
                         <label>Brush Size</label>
                         <input type="range" id="brushSize" min="5" max="100" value="40" class="orange-slider">
                     </div>
+
                     <div class="col" style="margin-top:15px; border-top:1px solid var(--border-color); padding-top:10px;">
                         <label><i data-lucide="cpu" size="12"></i> Model</label>
                         <div class="row">
@@ -353,20 +373,24 @@
                             <button onclick="document.getElementById('inp_modelSelect').value = localStorage.getItem('bojroModel_inp')" class="btn-icon"><i data-lucide="save" size="14"></i></button>
                         </div>
                     </div>
+
                     <div class="col" style="margin-top:10px;">
                         <label><i data-lucide="sparkles" size="12"></i> Prompt</label>
                         <textarea id="inp_prompt" rows="2" placeholder="Describe changes...">original</textarea>
                         <label><i data-lucide="shield-off" size="12"></i> Negative</label>
                         <textarea id="inp_neg" rows="1" style="min-height:35px;">bad quality, blur</textarea>
                     </div>
+
                     <div class="row" style="margin-top:10px;">
                         <div class="col"><label>Sampler</label><select id="inp_sampler"><option>Euler a</option></select></div>
                         <div class="col"><label>Schedule</label><select id="inp_scheduler"><option>Karras</option></select></div>
                     </div>
+
                     <div class="row" style="margin-top:10px;">
                         <div class="col"><label>Steps</label><input type="number" id="inp_steps" value="20"></div>
                         <div class="col"><label>CFG</label><input type="number" id="inp_cfg" value="7"></div>
                     </div>
+
                     <div class="col" style="margin-top:10px;">
                         <label>Denoising (0.0-1.0)</label>
                         <div class="row">
@@ -374,6 +398,7 @@
                             <span id="denoiseVal" style="font-family:monospace; color:var(--accent-primary);">0.75</span>
                         </div>
                     </div>
+
                     <div class="col" style="margin-top:10px;">
                          <div class="row" style="justify-content:space-between;">
                              <label>Mask Blur (0-64)</label>
@@ -381,6 +406,7 @@
                          </div>
                          <input type="range" id="inp_mask_blur" min="0" max="64" step="1" value="4" class="orange-slider" oninput="document.getElementById('blurVal').innerText = this.value">
                     </div>
+
                     <div class="row" style="margin-top:10px; justify-content:space-between; align-items: center;">
                         <div class="col">
                             <label>Mask Mode</label>
@@ -401,6 +427,10 @@
                 <div class="row" style="margin-bottom: 20px;">
                     <button class="btn-secondary" onclick="document.getElementById('inpUpload').click()" style="flex:1;">NEW IMG</button>
                     <button id="inpGenBtn" onclick="generate()" class="btn-small" style="flex:2; background: var(--accent-gradient); color:white; height:44px; font-size:14px;">GENERATE</button>
+                </div>
+
+                <div class="row" style="margin-bottom: 10px; justify-content: flex-end;">
+                     <button onclick="clearGenResults()" class="btn-small dashed" style="width: auto; margin: 0; padding: 6px 10px;">CLEAR VIEW</button>
                 </div>
                 
                 <div id="inpLoadingSpinner" class="spinner"></div>
@@ -499,9 +529,11 @@
                 <h3 style="margin:0; color:#fff;">CROP & EDIT</h3>
                 <button onclick="closeEditor()" class="btn-small" style="background:#333;">CANCEL</button>
             </div>
+            
             <div id="editorViewport" style="flex:1; position:relative; overflow:hidden; touch-action:none;">
                 <canvas id="editorCanvas" style="position:absolute; top:0; left:0; transform-origin: top left;"></canvas>
             </div>
+            
             <div style="padding:20px; background:#111; z-index:10; display:flex; flex-direction:column; gap:15px; max-height:45%; overflow-y:auto;">
                 <label style="color:#777; font-size:10px;">1MP Presets</label>
                 <div class="row" style="flex-wrap:wrap; justify-content:center;">
@@ -511,12 +543,14 @@
                     <button class="btn-small" onclick="setEditorRatio(832,1216)">9:16</button>
                     <button class="btn-small" onclick="setEditorRatio(1216,832)">16:9</button>
                 </div>
+                
                 <label style="color:#777; font-size:10px; margin-top:5px;">2MP Presets</label>
                 <div class="row" style="flex-wrap:wrap; justify-content:center;">
                     <button class="btn-small" onclick="setEditorRatio(1440,1440)">1:1</button>
                     <button class="btn-small" onclick="setEditorRatio(1088,1920)">9:16</button>
                     <button class="btn-small" onclick="setEditorRatio(1920,1088)">16:9</button>
                 </div>
+
                 <div class="row" style="margin-top:10px;">
                     <label style="color:#fff; width:50px;">Scale</label>
                     <input type="range" id="editScale" min="0.1" max="5" step="0.05" oninput="updateEditorTransform()" class="orange-slider">
@@ -544,11 +578,15 @@
 
     <div id="powerSettingsModal" class="modal hidden">
         <div class="modal-content" style="max-width: 300px;">
-            <div class="modal-header"><h3>Power Config</h3><button onclick="togglePowerSettings()" class="close-btn">×</button></div>
+            <div class="modal-header">
+                <h3>Power Config</h3>
+                <button onclick="togglePowerSettings()" class="close-btn">×</button>
+            </div>
             <div class="col">
                 <label for="power-server-ip">PC Server Address:</label>
                 <input type="text" id="power-server-ip" placeholder="http://192.168.x.x:5000">
                 <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Enter the URL shown on your PC app.</p>
+                
                 <button class="btn-small" onclick="savePowerSettings()" style="background: var(--accent-gradient); color: white; margin-top: 15px; height: 40px; font-size: 12px;">SAVE & CLOSE</button>
             </div>
         </div>
@@ -556,9 +594,13 @@
 
     <div id="batteryModal" class="modal hidden">
         <div class="modal-content" style="max-width: 300px; text-align: center;">
-            <div style="margin-bottom: 15px;"><i data-lucide="battery-charging" size="32" color="#00e676"></i></div>
+            <div style="margin-bottom: 15px;">
+                <i data-lucide="battery-charging" size="32" color="#00e676"></i>
+            </div>
             <h3 style="margin-bottom: 10px;">Enable Background Mode</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">To prevent Android from killing your generation when the screen is off, Resolver needs to ignore battery optimizations.</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">
+                To prevent Android from killing your generation when the screen is off, Resolver needs to ignore battery optimizations.
+            </p>
             <button onclick="requestBatteryPerm()" class="btn-small" style="background: var(--accent-gradient); color: white; margin-bottom: 10px;">ENABLE (RECOMMENDED)</button>
             <button onclick="skipBatteryPerm()" class="btn-small" style="background: transparent; color: var(--text-muted);">SKIP FOR NOW</button>
         </div>
@@ -566,21 +608,52 @@
 
     <div id="llmModal" class="modal hidden">
         <div class="modal-content" style="max-height: 90vh;">
-            <div class="modal-header"><h3>Magic Prompt</h3><button onclick="closeLlmModal()" class="close-btn">×</button></div>
+            <div class="modal-header">
+                <h3>Magic Prompt</h3>
+                <button onclick="closeLlmModal()" class="close-btn">×</button>
+            </div>
+            
             <div class="col" style="gap: 15px; flex: 1; overflow-y: auto;">
-                <div><label>Idea / Natural Language</label><textarea id="llmInput" rows="2" placeholder="A futuristic city with flying cars..." oninput="updateLlmState()"></textarea></div>
-                <div><label style="color:var(--accent-secondary);">Generated Output</label><textarea id="llmOutput" rows="4" placeholder="AI Output will appear here..." readonly></textarea></div>
+                <div>
+                    <label>Idea / Natural Language</label>
+                    <textarea id="llmInput" rows="2" placeholder="A futuristic city with flying cars..." oninput="updateLlmState()"></textarea>
+                </div>
+                
+                <div>
+                    <label style="color:var(--accent-secondary);">Generated Output</label>
+                    <textarea id="llmOutput" rows="4" placeholder="AI Output will appear here..." readonly></textarea>
+                </div>
+
                 <button id="llmUseBtn" onclick="useLlmPrompt()" class="btn-small" style="width:100%; background:var(--glass-border); color:var(--text-main); border:1px solid var(--accent-primary);">USE AS PROMPT</button>
-                <div style="display:none;"><textarea id="llmSystemPrompt" rows="4"></textarea></div>
+
+                <div style="display:none;">
+                    <textarea id="llmSystemPrompt" rows="4"></textarea>
+                </div>
+
                 <div id="llmSettingsBox" class="glass-box hidden" style="padding: 10px; background: rgba(0,0,0,0.3); margin-top:10px;">
                     <label style="color: var(--accent-primary);">LLM Configuration</label>
                     <div class="col" style="margin-top:5px; gap:8px;">
-                        <div class="row"><input type="text" id="llmApiBase" placeholder="http://192.xxx.x.xxx:1234"><button onclick="connectToLlm()" class="btn-small" style="width: auto;">LINK</button></div>
+                        
+                        <div class="row">
+                            <input type="text" id="llmApiBase" placeholder="http://192.xxx.x.xxx:1234">
+                            <button onclick="connectToLlm()" class="btn-small" style="width: auto;">LINK</button>
+                        </div>
+
                         <input type="password" id="llmApiKey" placeholder="API Key (Optional)">
-                        <div class="row"><select id="llmModelSelect"><option value="">Connect first...</option></select><button onclick="saveLlmGlobalSettings()" class="btn-icon" style="width:40px;height:40px;"><i data-lucide="save"></i></button></div>
+                        
+                        <div class="row">
+                            <select id="llmModelSelect">
+                                <option value="">Connect first...</option>
+                            </select>
+                            <button onclick="saveLlmGlobalSettings()" class="btn-icon" style="width:40px;height:40px;"><i data-lucide="save"></i></button>
+                        </div>
                     </div>
                 </div>
-                <div class="row" style="margin-top:auto;"><button onclick="toggleLlmSettings()" class="btn-icon"><i data-lucide="settings"></i></button><button id="llmGenerateBtn" onclick="generateLlmPrompt()" class="btn-small" style="flex:1; background: var(--accent-gradient); color: white; height: 44px;">GENERATE PROMPT</button></div>
+
+                <div class="row" style="margin-top:auto;">
+                    <button onclick="toggleLlmSettings()" class="btn-icon"><i data-lucide="settings"></i></button>
+                    <button id="llmGenerateBtn" onclick="generateLlmPrompt()" class="btn-small" style="flex:1; background: var(--accent-gradient); color: white; height: 44px;">GENERATE PROMPT</button>
+                </div>
             </div>
         </div>
     </div>
@@ -603,7 +676,13 @@
         <div class="glass-dock">
             <div class="dock-item active" onclick="switchTab('gen')"><i data-lucide="zap"></i><span>GEN</span></div>
             <div class="dock-item" onclick="switchTab('inp')"><i data-lucide="brush"></i><span>INP</span></div>
-            <div class="dock-item" onclick="switchTab('que')"><div style="position: relative;"><i data-lucide="layers"></i><div id="queueBadge" class="badge hidden">0</div></div><span>QUE</span></div>
+            <div class="dock-item" onclick="switchTab('que')">
+                <div style="position: relative;">
+                    <i data-lucide="layers"></i>
+                    <div id="queueBadge" class="badge hidden">0</div>
+                </div>
+                <span>QUE</span>
+            </div>
             <div class="dock-item" onclick="switchTab('gal')"><i data-lucide="image"></i><span>GAL</span></div>
             <div class="dock-item" onclick="switchTab('ana')"><i data-lucide="scan-line"></i><span>ANA</span></div>
         </div>

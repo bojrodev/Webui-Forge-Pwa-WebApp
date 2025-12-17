@@ -595,23 +595,27 @@ function initMainCanvas() {
     mainCanvas.addEventListener('mouseleave', stopPaint);
 }
 
+// FIX: Set image as background instead of drawing it (allows real erasing)
 function resetInpaintCanvas() {
     if(!sourceImageB64) return;
-    const img = new Image();
-    img.src = sourceImageB64;
-    img.onload = () => {
-        mainCanvas.width = editorTargetW;
-        mainCanvas.height = editorTargetH;
-        maskCanvas.width = editorTargetW;
-        maskCanvas.height = editorTargetH;
-        
-        mainCtx.drawImage(img, 0, 0);
-        maskCtx.fillStyle = "black";
-        maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-        
-        historyStates = []; 
-        saveHistory();
-    };
+    
+    // 1. Set CSS Background
+    mainCanvas.width = editorTargetW;
+    mainCanvas.height = editorTargetH;
+    mainCanvas.style.backgroundImage = `url(${sourceImageB64})`;
+    mainCanvas.style.backgroundSize = "100% 100%";
+    
+    // 2. Clear Visual Canvas (It should only hold strokes)
+    mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+    
+    // 3. Reset Mask Canvas (Solid Black)
+    maskCanvas.width = editorTargetW;
+    maskCanvas.height = editorTargetH;
+    maskCtx.fillStyle = "black";
+    maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+    
+    historyStates = []; 
+    saveHistory();
 }
 
 function startPaint(e) {
@@ -648,16 +652,21 @@ function painting(e) {
     maskCtx.lineWidth = size; maskCtx.lineCap = 'round'; maskCtx.lineJoin = 'round';
     
     if (currentBrushMode === 'draw') {
+        // Draw Orange on Visual, White on Mask
         mainCtx.globalCompositeOperation = 'source-over';
         mainCtx.strokeStyle = 'rgba(255, 165, 0, 0.5)'; 
         maskCtx.globalCompositeOperation = 'source-over';
         maskCtx.strokeStyle = 'white';
     } else {
+        // FIX: Erase mode should remove orange (destination-out) and paint black on mask
+        mainCtx.globalCompositeOperation = 'destination-out';
+        mainCtx.strokeStyle = 'rgba(0,0,0,1)'; // Color doesn't matter for dest-out
+        
+        maskCtx.globalCompositeOperation = 'source-over'; // Paint over with black
         maskCtx.strokeStyle = 'black';
-        maskCtx.globalCompositeOperation = 'source-over';
     }
     
-    if(currentBrushMode === 'draw') { mainCtx.lineTo(x, y); mainCtx.stroke(); } 
+    mainCtx.lineTo(x, y); mainCtx.stroke(); 
     maskCtx.lineTo(x, y); maskCtx.stroke();
 }
 
@@ -666,11 +675,7 @@ function stopPaint() {
         isDrawing = false;
         mainCtx.closePath(); maskCtx.closePath();
         mainCtx.globalCompositeOperation = 'source-over';
-        if(currentBrushMode === 'erase') {
-            const img = new Image();
-            img.src = sourceImageB64;
-            img.onload = () => { mainCtx.clearRect(0,0, mainCanvas.width, mainCanvas.height); mainCtx.drawImage(img, 0, 0); };
-        }
+        // FIX: Removed destructive logic that was wiping the canvas
         saveHistory();
     }
 }
@@ -720,9 +725,9 @@ window.switchTab = function(view) {
 }
 
 window.setMode = async function(mode) {
-    // --- NEO HOOK: VRAM UNLOAD ON QWEN SWITCH ---
+    // FIX 2: Universal VRAM Unload on Mode Switch (Restored behavior)
     if (currentMode !== mode) { 
-        if(HOST && (mode === 'qwen' || currentMode === 'qwen')) { 
+        if(HOST) { 
             await unloadModel(true); 
         } 
     }
@@ -900,6 +905,10 @@ async function fetchVaes() {
     }); 
     const savedBits = localStorage.getItem('bojro_flux_bits'); 
     if(savedBits) document.getElementById('flux_bits').value = savedBits; 
+
+    // --- NEO HOOK: RESTORE QWEN BITS ---
+    const savedQwenBits = localStorage.getItem('bojro_qwen_bits');
+    if(savedQwenBits) document.getElementById('qwen_bits').value = savedQwenBits;
 }
 
 window.saveSelection = function(key) {
@@ -909,6 +918,7 @@ window.saveSelection = function(key) {
     else if(key === 'flux_bits') localStorage.setItem('bojro_flux_bits', document.getElementById('flux_bits').value);
     // --- NEO HOOK: SAVE QWEN ---
     else if(key === 'qwen') localStorage.setItem('bojroModel_qwen', document.getElementById('qwen_modelSelect').value);
+    else if(key === 'qwen_bits') localStorage.setItem('bojro_qwen_bits', document.getElementById('qwen_bits').value);
 }
 
 window.saveTrident = function() {
@@ -1188,11 +1198,8 @@ window.useLlmPrompt = function() {
 // -----------------------------------------------------------
 
 function buildJobFromUI() {
-    // --- NEO HOOK: DELEGATE TO NEO IF QWEN MODE ---
-    if (currentMode === 'qwen' && window.Neo) {
-        return window.Neo.buildJob();
-    }
-
+    // FIX 1: Prioritize Inpaint Task Check BEFORE Qwen Mode Check
+    
     let payload = {};
     let overrides = {};
     overrides["forge_inference_memory"] = getVramMapping();
@@ -1274,6 +1281,12 @@ function buildJobFromUI() {
         payload.override_settings = overrides;
 
         return { mode: 'inp', modelTitle: model, payload: payload, desc: `Inpaint: ${prompt.substring(0,20)}...` };
+    }
+
+    // --- NEO HOOK: DELEGATE TO NEO IF QWEN MODE ---
+    // Moved below currentTask check to prevent hijacking
+    if (currentMode === 'qwen' && window.Neo) {
+        return window.Neo.buildJob();
     }
 
     // Existing XL / Flux Logic

@@ -8,9 +8,9 @@ const Neo = {
     // defaults optimized for Z-Image Turbo (Decoupled-DMD) with LCM
     defaults: {
         steps: 8,
-        cfg: 1.8,
+        cfg: 1.0,  // UPDATED: Default CFG is now 1.0
         sampler: "LCM", 
-        scheduler: "Simple"
+        scheduler: "Normal" // UPDATED: Default Scheduler is now Normal
     },
 
     // Called by app.js when models are fetched
@@ -50,7 +50,7 @@ const Neo = {
          }
     },
 
-    // NEW: Populates the Dual Dropdowns (VAE and Qwen/TE)
+    // Populates the Dual Dropdowns (VAE and Qwen/TE)
     populateDual: function(modulesList) {
         const slots = [
             document.getElementById('qwen_vae'), 
@@ -104,7 +104,7 @@ const Neo = {
         const neg = document.getElementById('qwen_neg').value;
         
         const steps = parseInt(document.getElementById('qwen_steps').value) || 8;
-        const cfg = parseFloat(document.getElementById('qwen_cfg').value) || 1.8;
+        const cfg = parseFloat(document.getElementById('qwen_cfg').value) || 1.0;
         const width = parseInt(document.getElementById('qwen_width').value) || 1024;
         const height = parseInt(document.getElementById('qwen_height').value) || 1024;
         const seed = parseInt(document.getElementById('qwen_seed').value) || -1;
@@ -117,6 +117,9 @@ const Neo = {
         // 2. Define Overrides
         const vae = document.getElementById('qwen_vae').value;
         const te = document.getElementById('qwen_te').value;
+        
+        // UPDATED: Get Low Bits setting
+        const bits = document.getElementById('qwen_bits').value || "Automatic (fp16 LoRA)";
 
         const modulesToLoad = [vae, te].filter(v => v && v !== "Automatic" && v !== "None");
 
@@ -124,7 +127,7 @@ const Neo = {
             "sd_model_checkpoint": modelTitle,
             "sd_vae": vae === "Automatic" ? "Automatic" : "Automatic", 
             "forge_additional_modules": modulesToLoad, 
-            "forge_unet_storage_dtype": "Automatic (fp16 LoRA)"
+            "forge_unet_storage_dtype": bits // UPDATED: Dynamic low bits
         };
 
         // 3. Construct Payload
