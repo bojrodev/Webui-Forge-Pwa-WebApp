@@ -64,9 +64,10 @@ let currentAnalyzedPrompts = null;
 let llmSettings = {
     baseUrl: 'http://localhost:11434', key: '', model: '',
     system_xl: `You are a Prompt Generator for Image Generation. OBJECTIVE: Convert user concepts into a dense, highly detailed string of comma-separated tags.`,
-    system_flux: `You are a Image Prompter. OBJECTIVE: Convert user concepts into a detailed, natural language description.`
+    system_flux: `You are a Image Prompter. OBJECTIVE: Convert user concepts into a detailed, natural language description.`,
+    system_qwen: `You are a Prompt Generator for Z-Image Turbo. OBJECTIVE: Precise, high-fidelity natural language descriptions.`
 };
-let llmState = { xl: { input: "", output: "" }, flux: { input: "", output: "" } };
+let llmState = { xl: { input: "", output: "" }, flux: { input: "", output: "" }, qwen: { input: "", output: "" } };
 let activeLlmMode = 'xl';
 
 // --- INITIALIZATION ---
@@ -84,7 +85,7 @@ window.onload = function() {
         setupBackgroundListeners();
         createNotificationChannel(); 
         loadLlmSettings(); 
-        loadPowerSettings(); // <--- POWER BUTTON INIT
+        loadPowerSettings(); 
         
         // Init Inpainting Systems
         initMainCanvas(); 
@@ -426,9 +427,8 @@ function resetEditorView() {
     editorScale = editorMinScale;
     
     // Center image relative to the CANVAS center
-    const cvs = document.getElementById('editorCanvas');
-    editorTranslateX = (cvs.width - (editorImage.naturalWidth * editorScale)) / 2;
-    editorTranslateY = (cvs.height - (editorImage.naturalHeight * editorScale)) / 2;
+    editorTranslateX = (document.getElementById('editorCanvas').width - (editorImage.naturalWidth * editorScale)) / 2;
+    editorTranslateY = (document.getElementById('editorCanvas').height - (editorImage.naturalHeight * editorScale)) / 2;
     
     // Reset Sliders
     document.getElementById('editScale').value = 1;
@@ -720,34 +720,62 @@ window.switchTab = function(view) {
 }
 
 window.setMode = async function(mode) {
-    if (currentMode !== mode) { if(HOST) await unloadModel(true); }
+    // --- NEO HOOK: VRAM UNLOAD ON QWEN SWITCH ---
+    if (currentMode !== mode) { 
+        if(HOST && (mode === 'qwen' || currentMode === 'qwen')) { 
+            await unloadModel(true); 
+        } 
+    }
+
     currentMode = mode;
     const root = document.documentElement;
     const btnXL = document.getElementById('btn-xl');
     const btnFlux = document.getElementById('btn-flux');
+    // --- NEO HOOK: QWEN BTN ---
+    const btnQwen = document.getElementById('btn-qwen');
     
     const xlRow = document.getElementById('row-xl-model');
     const fluxRow = document.getElementById('row-flux-model');
+    // --- NEO HOOK: QWEN ROW ---
+    const qwenRow = document.getElementById('row-qwen-model');
+
     const xlCont = document.getElementById('mode-xl-container');
     const fluxCont = document.getElementById('mode-flux-container');
+    // --- NEO HOOK: QWEN CONT ---
+    const qwenCont = document.getElementById('mode-qwen-container');
+
+    // Reset all
+    btnXL.classList.remove('active');
+    btnFlux.classList.remove('active');
+    if(btnQwen) btnQwen.classList.remove('active');
+
+    xlRow.classList.add('hidden');
+    fluxRow.classList.add('hidden');
+    if(qwenRow) qwenRow.classList.add('hidden');
+
+    xlCont.classList.add('hidden');
+    fluxCont.classList.add('hidden');
+    if(qwenCont) qwenCont.classList.add('hidden');
 
     if(mode === 'flux') {
         root.setAttribute('data-mode', 'flux');
-        btnXL.classList.remove('active');
         btnFlux.classList.add('active');
-        xlRow.classList.add('hidden');
         fluxRow.classList.remove('hidden');
-        xlCont.classList.add('hidden');
         fluxCont.classList.remove('hidden');
         document.getElementById('genBtn').innerText = "QUANTUM GENERATE";
         document.getElementById('appTitle').innerText = "BOJRO FLUX";
+    } else if (mode === 'qwen') {
+        // --- NEO HOOK: QWEN LOGIC ---
+        root.setAttribute('data-mode', 'qwen');
+        if(btnQwen) btnQwen.classList.add('active');
+        if(qwenRow) qwenRow.classList.remove('hidden');
+        if(qwenCont) qwenCont.classList.remove('hidden');
+        document.getElementById('genBtn').innerText = "TURBO GENERATE";
+        document.getElementById('appTitle').innerText = "BOJRO NEO";
     } else {
         root.removeAttribute('data-mode');
-        btnFlux.classList.remove('active');
         btnXL.classList.add('active');
-        fluxRow.classList.add('hidden');
         xlRow.classList.remove('hidden');
-        fluxCont.classList.add('hidden');
         xlCont.classList.remove('hidden');
         document.getElementById('genBtn').innerText = "GENERATE";
         document.getElementById('appTitle').innerText = "BOJRO RESOLVER";
@@ -796,6 +824,10 @@ async function fetchModels() {
             selInp.appendChild(new Option(m.model_name, m.title));
         });
         ['xl', 'flux', 'inp'].forEach(mode => { const saved = localStorage.getItem('bojroModel_'+mode); if(saved) document.getElementById(mode+'_modelSelect').value = saved; });
+        
+        // --- NEO HOOK: POPULATE QWEN MODELS ---
+        if(window.Neo) window.Neo.populateModels(data);
+
     } catch(e){}
 }
 
@@ -811,6 +843,10 @@ async function fetchSamplers() {
             selInp.appendChild(new Option(s.name, s.name));
             const opt = new Option(s.name, s.name); if(s.name === "Euler") opt.selected = true; selFlux.appendChild(opt);
         });
+
+        // --- NEO HOOK: POPULATE QWEN SAMPLERS ---
+        if(window.Neo) window.Neo.populateSamplers(data);
+
     } catch(e){}
 }
 
@@ -855,6 +891,8 @@ async function fetchVaes() {
                 if (name !== "Automatic" && !Array.from(sel.options).some(o => o.value === name)) sel.appendChild(new Option(name, name)); 
             }); 
         }); 
+        // --- NEO HOOK: POPULATE DUAL (VAE/TE) for QWEN ---
+        if(window.Neo) window.Neo.populateDual(list);
     } 
     ['flux_vae', 'flux_clip', 'flux_t5'].forEach(id => { 
         const saved = localStorage.getItem('bojro_'+id); 
@@ -869,6 +907,8 @@ window.saveSelection = function(key) {
     else if(key === 'flux') localStorage.setItem('bojroModel_flux', document.getElementById('flux_modelSelect').value);
     else if(key === 'inp') localStorage.setItem('bojroModel_inp', document.getElementById('inp_modelSelect').value);
     else if(key === 'flux_bits') localStorage.setItem('bojro_flux_bits', document.getElementById('flux_bits').value);
+    // --- NEO HOOK: SAVE QWEN ---
+    else if(key === 'qwen') localStorage.setItem('bojroModel_qwen', document.getElementById('qwen_modelSelect').value);
 }
 
 window.saveTrident = function() {
@@ -942,13 +982,21 @@ window.filterLoras = () => {
 }
 
 function isLoraActive(loraName) {
-    const promptId = activeLoraMode === 'xl' ? 'xl_prompt' : 'flux_prompt';
+    let promptId;
+    if (activeLoraMode === 'xl') promptId = 'xl_prompt';
+    else if (activeLoraMode === 'flux') promptId = 'flux_prompt';
+    else if (activeLoraMode === 'qwen') promptId = 'qwen_prompt'; // --- NEO HOOK ---
+    
     const text = document.getElementById(promptId).value;
     return text.includes(`<lora:${loraName}:`);
 }
 
 window.toggleLora = async (loraName, rowEl, loraPath) => {
-    const promptId = activeLoraMode === 'xl' ? 'xl_prompt' : 'flux_prompt';
+    let promptId;
+    if (activeLoraMode === 'xl') promptId = 'xl_prompt';
+    else if (activeLoraMode === 'flux') promptId = 'flux_prompt';
+    else if (activeLoraMode === 'qwen') promptId = 'qwen_prompt'; // --- NEO HOOK ---
+
     const p = document.getElementById(promptId);
     const escapedName = loraName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`<lora:${escapedName}:[^>]+>`, 'g');
@@ -1017,7 +1065,9 @@ window.openLlmModal = (mode) => {
     const outputEl = document.getElementById('llmOutput');
     inputEl.value = llmState[mode].input;
     outputEl.value = llmState[mode].output;
-    const savedSys = activeLlmMode === 'xl' ? llmSettings.system_xl : llmSettings.system_flux;
+    let savedSys = llmSettings.system_xl;
+    if(activeLlmMode === 'flux') savedSys = llmSettings.system_flux;
+    else if(activeLlmMode === 'qwen') savedSys = llmSettings.system_qwen;
     document.getElementById('llmSystemPrompt').value = savedSys || "";
     updateLlmButtonState();
     if(!inputEl.value) inputEl.focus();
@@ -1053,7 +1103,9 @@ window.saveLlmGlobalSettings = function() {
     llmSettings.key = document.getElementById('llmApiKey').value;
     llmSettings.model = document.getElementById('llmModelSelect').value;
     const sysVal = document.getElementById('llmSystemPrompt').value;
-    if(activeLlmMode === 'xl') llmSettings.system_xl = sysVal; else llmSettings.system_flux = sysVal;
+    if(activeLlmMode === 'xl') llmSettings.system_xl = sysVal; 
+    else if(activeLlmMode === 'flux') llmSettings.system_flux = sysVal;
+    else if(activeLlmMode === 'qwen') llmSettings.system_qwen = sysVal;
     localStorage.setItem('bojroLlmConfig', JSON.stringify(llmSettings));
     if(Toast) Toast.show({ text: 'Settings & Model Saved', duration: 'short' });
 }
@@ -1096,7 +1148,9 @@ window.generateLlmPrompt = async function() {
     
     btn.disabled = true; btn.innerText = "GENERATING...";
     const sysPrompt = document.getElementById('llmSystemPrompt').value;
-    const promptTemplate = `1.Prompt(natural language): ${inputVal} Model: ${activeLlmMode === 'xl' ? 'Sdxl' : 'Flux'}`;
+    // --- NEO HOOK: QWEN PROMPT CONTEXT ---
+    const contextMode = activeLlmMode === 'qwen' ? 'Qwen/Turbo' : (activeLlmMode === 'xl' ? 'Sdxl' : 'Flux');
+    const promptTemplate = `1.Prompt(natural language): ${inputVal} Model: ${contextMode}`;
     
     try {
         const payload = { model: model || "default", messages: [{ role: "system", content: sysPrompt }, { role: "user", content: promptTemplate }], stream: false };
@@ -1117,7 +1171,13 @@ window.generateLlmPrompt = async function() {
 window.useLlmPrompt = function() {
     const result = document.getElementById('llmOutput').value;
     if(!result) return alert("Generate a prompt first!");
-    const targetId = activeLlmMode === 'xl' ? 'xl_prompt' : 'flux_prompt';
+    
+    // --- NEO HOOK: TARGET QWEN PROMPT ---
+    let targetId;
+    if (activeLlmMode === 'xl') targetId = 'xl_prompt';
+    else if (activeLlmMode === 'flux') targetId = 'flux_prompt';
+    else if (activeLlmMode === 'qwen') targetId = 'qwen_prompt';
+
     document.getElementById(targetId).value = result;
     closeLlmModal();
     if(Toast) Toast.show({ text: 'Applied to main prompt!', duration: 'short' });
@@ -1128,6 +1188,11 @@ window.useLlmPrompt = function() {
 // -----------------------------------------------------------
 
 function buildJobFromUI() {
+    // --- NEO HOOK: DELEGATE TO NEO IF QWEN MODE ---
+    if (currentMode === 'qwen' && window.Neo) {
+        return window.Neo.buildJob();
+    }
+
     let payload = {};
     let overrides = {};
     overrides["forge_inference_memory"] = getVramMapping();
@@ -1484,7 +1549,13 @@ async function runJob(job, isBatch = false) {
         }
     } catch(e) { throw e; } finally {
         spinner.style.display = 'none'; btn.disabled = false; 
-        if(currentTask === 'inp') { btn.innerText = "GENERATE"; } else { btn.innerText = currentMode === 'xl' ? "GENERATE" : "QUANTUM GENERATE"; }
+        // --- NEO HOOK: BUTTON TEXT ---
+        if(currentTask === 'inp') { btn.innerText = "GENERATE"; } 
+        else { 
+            if (currentMode === 'xl') btn.innerText = "GENERATE";
+            else if (currentMode === 'flux') btn.innerText = "QUANTUM GENERATE";
+            else if (currentMode === 'qwen') btn.innerText = "TURBO GENERATE";
+        }
     }
 }
 
@@ -1596,6 +1667,9 @@ function parseGenInfo(rawText) {
 }
 window.copyToSdxl = function() { if (!currentAnalyzedPrompts) return; document.getElementById('xl_prompt').value = currentAnalyzedPrompts.pos; document.getElementById('xl_neg').value = currentAnalyzedPrompts.neg; window.setMode('xl'); window.switchTab('gen'); if(Toast) Toast.show({ text: 'Copied to SDXL', duration: 'short' }); }
 window.copyToFlux = function() { if (!currentAnalyzedPrompts) return; document.getElementById('flux_prompt').value = currentAnalyzedPrompts.pos; window.setMode('flux'); window.switchTab('gen'); if(Toast) Toast.show({ text: 'Copied to FLUX', duration: 'short' }); }
+// --- NEO HOOK: ANALYZER COPY ---
+window.copyToQwen = function() { if (!currentAnalyzedPrompts) return; document.getElementById('qwen_prompt').value = currentAnalyzedPrompts.pos; document.getElementById('qwen_neg').value = currentAnalyzedPrompts.neg || "bad quality, blur, watermark"; window.setMode('qwen'); window.switchTab('gen'); if(Toast) Toast.show({ text: 'Copied to QWEN', duration: 'short' }); }
+
 function loadAutoDlState() { const c = document.getElementById('autoDlCheck'); if(c) c.checked = localStorage.getItem('bojroAutoSave') === 'true'; }
 window.saveAutoDlState = () => localStorage.setItem('bojroAutoSave', document.getElementById('autoDlCheck').checked);
 
