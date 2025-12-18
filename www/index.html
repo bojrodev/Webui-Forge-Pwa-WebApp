@@ -685,7 +685,7 @@
         </div>
     </div>
     
-    <div id="fullScreenModal" class="modal hidden">
+<div id="fullScreenModal" class="modal hidden">
         <div class="lightbox-container">
             <button class="nav-arrow left" onclick="slideImage(-1)"><i data-lucide="chevron-left"></i></button>
             <img id="fsImage" class="lightbox-img">
@@ -693,7 +693,11 @@
         </div>
         <div class="lightbox-controls">
             <button onclick="closeFsModal()" class="btn-small" style="background: #333;">CLOSE</button>
+            
             <button onclick="downloadCurrent()" class="btn-icon" style="background: var(--accent-secondary); border:none; color:white;"><i data-lucide="download"></i></button>
+            
+            <button onclick="editCurrentFs()" class="btn-icon" style="background: var(--accent-primary); border:none; color:white;"><i data-lucide="brush"></i></button>
+            
             <button onclick="deleteCurrentFsImage()" class="btn-icon" style="background: #f44336; border:none; color:white;"><i data-lucide="trash-2"></i></button>
             <button onclick="analyzeCurrentFs()" class="btn-small" style="background: var(--accent-primary);">ANALYZE</button>
         </div>

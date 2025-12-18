@@ -571,6 +571,53 @@ window.deleteSelectedImages = function() {
 }
 
 // -----------------------------------------------------------
+// NEW: SEND TO INPAINT EDITOR
+// -----------------------------------------------------------
+
+window.editCurrentFs = function() {
+    const src = document.getElementById('fsImage').src;
+    if (!src) return;
+
+    // 1. Close the Lightbox
+    window.closeFsModal();
+
+    // 2. Switch to the Inpaint Tab
+    window.switchTab('inp');
+
+    // 3. Load the image directly into the Editor
+    const img = new Image();
+    img.crossOrigin = "Anonymous"; // Helpful if handling CORS images
+    img.src = src;
+    
+    img.onload = () => {
+        // Set global editor image (defined in globals.js)
+        editorImage = img;
+
+        // Open the Editor Modal
+        document.getElementById('editorModal').classList.remove('hidden');
+
+        // Hide the upload prompt, show the editor canvas container
+        document.getElementById('img-input-container').style.display = 'none';
+        
+        // Trigger Layout Recalculation (defined in editor.js)
+        // We use a small timeout to ensure the modal is rendered first
+        setTimeout(() => {
+            // Reset to defaults or current settings
+            editorTargetW = parseInt(document.getElementById('xl_width').value) || 1024;
+            editorTargetH = parseInt(document.getElementById('xl_height').value) || 1024;
+            
+            // Call editor.js functions
+            if (typeof recalcEditorLayout === 'function') recalcEditorLayout();
+            if (typeof resetEditorView === 'function') resetEditorView();
+        }, 50);
+    };
+    
+    img.onerror = () => {
+        alert("Failed to load image for editing.");
+    };
+}
+
+// -----------------------------------------------------------
 // FULLSCREEN LIGHTBOX & ANALYSIS
 // -----------------------------------------------------------
 
