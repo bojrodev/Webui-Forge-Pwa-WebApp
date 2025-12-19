@@ -42,9 +42,10 @@ Unlike standard browser wrappers, Resolver utilizes **Native Android Foreground 
 
 ## 📸 Screenshots
 
-| **Home & Queue** | **Flux GGUF UI** | **LoRA Manager** |
+| **Home/SDXL** | **Flux UI** | **LoRA Manager** |
 |:---:|:---:|:---:|
-| ![Home UI Placeholder](https://placehold.co/250x500?text=Home+Screen) | ![Flux UI Placeholder](https://placehold.co/250x500?text=Flux+Interface) | ![LoRA Manager Placeholder](https://placehold.co/250x500?text=LoRA+Manager) |
+| ![Home UI Placeholder](<img width="415" height="960" alt="Home" src="https://github.com/user-attachments/assets/73bc7ab2-47ea-4598-9757-c86be9ad03c7" />
+) | ![Flux UI Placeholder](https://placehold.co/250x500?text=Flux+Interface) | ![LoRA Manager Placeholder](https://placehold.co/250x500?text=LoRA+Manager) |
 
 | **Inpainting Canvas** | **Qwen / Turbo Mode** | **Magic Prompt (LLM)** |
 |:---:|:---:|:---:|
