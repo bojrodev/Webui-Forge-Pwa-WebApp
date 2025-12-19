@@ -70,38 +70,26 @@ Unlike standard browser wrappers, Resolver utilizes **Native Android Foreground 
 
 ## 🔌 The "Power Button" Feature
 
-Resolver includes a remote wake/shutdown feature, allowing you to turn on your PC or wake your server directly from the app header.
+Resolver includes a remote wake feature, allowing you to turn on your web-ui directly from the app header.
 
 **⚠️ Requirement:** This feature requires a lightweight helper application running on your PC.
 
 **How to set it up:**
 
-1.  **Download the Helper:** Go to the [Releases Page](#) and download `Resolver-Power-Server.exe`.
+1.  **Download the Helper:** Go to the [Releases Page](#) and download `BojroPowerv2portable.exe`.
 2.  **Run on PC:** Execute the file on the PC where WebUI Forge is installed. It will act as a listener for the mobile signal.
 3.  **Configure App:**
     * Open Resolver on your Android device.
-    * Tap the **Settings Gear** icon next to the Power Button (⚡) in the header.
+    * Tap the **Settings Gear** icon next to the Power Button (ტ) in the header.
     * Enter the Local IP address shown in the helper app console (e.g., `http://192.168.1.5:5000`).
     * Click **Save**.
-4.  **Usage:** Simply tap the Power Button in the app header to send a Wake/Start signal to your PC.
+4.  **Usage:** Simply tap the Power Button in the app header to send a start signal to your PC.
 
 ---
 
 ## 🛠️ Installation & Setup
 
-### 1. Install "Forge Neo" (PC)
-This app is strictly optimized for **Forge Neo** (Haoming02's branch), which supports Qwen, Z-Image, and Wan 2.2 models. Standard Forge may lack the necessary API endpoints for these features.
-
-1.  Clone the **Neo** branch of WebUI Forge:
-    ```bash
-    git clone [https://github.com/Haoming02/sd-webui-forge-classic](https://github.com/Haoming02/sd-webui-forge-classic) sd-webui-forge-neo --branch neo
-    ```
-2.  Edit your `webui-user.bat` file in the new folder.
-3.  Add the following to `COMMANDLINE_ARGS`:
-    ```bat
-    --listen --api --cors-allow-origins *
-    ```
-4.  Run `webui-user.bat`.
+### 1. Install "Forge Neo" or "forge WebUi" (PC)
 
 ### 2. Install Resolver (Android)
 * Download the latest `.apk` from the **[Releases Page](#)**.
