@@ -105,13 +105,13 @@ const Neo = {
         // Returns amount to RESERVE (Inversed Logic)
         switch (profile) {
             case 'low':
-                return 6144; // 6GB Reserve (Forces Offload - Safe)
+                return 4980; // 6GB Reserve (Forces Offload - Safe)
             case 'high':
                 return 1024; // 1GB Reserve (Aggressive - Might Crash)
             case 'mid':
             default:
                 // FIX: 6GB Reserve to force Qwen Encoder (8.4GB) to RAM
-                return 6144; 
+                return 4980; 
         }
     },
 
