@@ -3,14 +3,37 @@
 // -----------------------------------------------------------
 
 function loadHostIp() {
-    const ip = localStorage.getItem('bojroHostIp');
-    if (ip) document.getElementById('hostIp').value = ip;
+    // Load from new centralized config first
+    loadConnectionConfig();
+    if (connectionConfig.baseIp) {
+        HOST = buildWebUIUrl();
+        // Update legacy field for backward compatibility if it exists
+        const legacyField = document.getElementById('hostIp');
+        if (legacyField) legacyField.value = HOST;
+    } else {
+        // Fallback to legacy method
+        const ip = localStorage.getItem('bojroHostIp');
+        if (ip) {
+            HOST = ip;
+            const legacyField = document.getElementById('hostIp');
+            if (legacyField) legacyField.value = ip;
+        }
+    }
 }
 
 window.connect = async function(silent = false) {
-    HOST = document.getElementById('hostIp').value.replace(/\/$/, "");
+    // Use centralized configuration if available, otherwise fallback to legacy field
+    if (connectionConfig.baseIp) {
+        HOST = buildWebUIUrl();
+    } else {
+        const legacyField = document.getElementById('hostIp');
+        if (legacyField) {
+            HOST = legacyField.value.replace(/\/$/, "");
+        }
+    }
+    
     const dot = document.getElementById('statusDot');
-    if (!silent) dot.style.background = "yellow";
+    if (!silent && dot) dot.style.background = "yellow";
 
     try {
         if (LocalNotifications && !silent) {
@@ -187,7 +210,15 @@ function normalize(str) {
 
 window.connectToLlm = async function() {
     if (!CapacitorHttp) return alert("Native HTTP Plugin not loaded! Rebuild App.");
-    const baseUrl = document.getElementById('llmApiBase').value.replace(/\/$/, "");
+    
+    // Use centralized configuration if available, otherwise fallback to legacy fields
+    let baseUrl;
+    if (connectionConfig.baseIp) {
+        baseUrl = buildLlmUrl();
+    } else {
+        baseUrl = document.getElementById('llmApiBase').value.replace(/\/$/, "");
+    }
+    
     const key = document.getElementById('llmApiKey').value;
     if (!baseUrl) return alert("Enter Server URL first");
 
@@ -234,7 +265,15 @@ window.generateLlmPrompt = async function() {
     if (!CapacitorHttp) return alert("Native HTTP Plugin not loaded!");
     const btn = document.getElementById('llmGenerateBtn');
     const inputVal = document.getElementById('llmInput').value;
-    const baseUrl = document.getElementById('llmApiBase').value.replace(/\/$/, "");
+    
+    // Use centralized configuration first, fallback to legacy
+    let baseUrl;
+    if (connectionConfig.baseIp) {
+        baseUrl = buildLlmUrl();
+    } else {
+        baseUrl = document.getElementById('llmApiBase') ? document.getElementById('llmApiBase').value.replace(/\/$/, "") : '';
+    }
+    
     const model = document.getElementById('llmModelSelect').value;
     if (!inputVal) return alert("Please enter an idea!");
     if (!baseUrl) return alert("Please connect to server first!");
@@ -299,7 +338,14 @@ window.generateLlmPrompt = async function() {
 
 window.sendPowerSignal = async function() {
     const btn = document.getElementById('power-btn-mini');
-    const serverUrl = localStorage.getItem('bojro_power_ip');
+    
+    // Use centralized configuration if available, otherwise fallback to legacy method
+    let serverUrl;
+    if (connectionConfig.baseIp) {
+        serverUrl = buildWakeUrl();
+    } else {
+        serverUrl = localStorage.getItem('bojro_power_ip');
+    }
 
     if (!serverUrl) {
         alert("Please set the PC Server IP in settings first!");

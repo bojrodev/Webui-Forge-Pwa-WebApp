@@ -75,8 +75,24 @@ window.LoraManager = {
     open: async function(targetMode) {
         this.targetMode = targetMode; // 'xl', 'flux', 'qwen'
         
-        const hostEl = document.getElementById('hostIp');
-        if (!hostEl || !hostEl.value) return alert("Link server first!");
+        // FIX (Issue 3): Use global HOST variable directly
+        // Removed reliance on window.HOST (which is undefined for let variables)
+        // and removed reliance on hidden hostIp input.
+        let targetHost = "";
+        
+        // Try to get from config utility first
+        if (typeof buildWebUIUrl === 'function') {
+            targetHost = buildWebUIUrl();
+        } 
+        
+        // Fallback to global HOST variable if config helper failed/missing
+        if (!targetHost && typeof HOST !== 'undefined') {
+            targetHost = HOST;
+        }
+
+        if (!targetHost) {
+            return alert("Link server first!");
+        }
 
         const modal = document.getElementById('loraModal');
         modal.classList.remove('hidden');
@@ -85,7 +101,11 @@ window.LoraManager = {
         document.getElementById('loraVerticalList').innerHTML = '<div class="spinner" style="display:block"></div>';
 
         try {
-            const res = await fetch(`${hostEl.value}/sdapi/v1/loras`);
+            // FIX: Added headers to support ngrok/auth
+            const res = await fetch(`${targetHost}/sdapi/v1/loras`, {
+                headers: typeof getHeaders === 'function' ? getHeaders() : {}
+            });
+            
             if (!res.ok) throw new Error("Fetch failed");
             
             const data = await res.json();
@@ -304,7 +324,16 @@ window.LoraManager = {
     // =========================================================
     
     smartLoadThumbnail: async function(imgEl, lora) {
-        const host = document.getElementById('hostIp').value;
+        // FIX: Use proper HOST check (same as open)
+        let targetHost = "";
+        if (typeof buildWebUIUrl === 'function') {
+            targetHost = buildWebUIUrl();
+        } 
+        if (!targetHost && typeof HOST !== 'undefined') {
+            targetHost = HOST;
+        }
+        
+        let host = targetHost || ''; // Ensure it's not undefined
         
         // 1. Determine "Guess" URLs based on real path
         // lora.path is absolute (e.g. C:\sd\models\Lora\foo.safetensors)
@@ -326,6 +355,8 @@ window.LoraManager = {
         const checkServer = async (ext) => {
             const url = `${host}/file=${pathNoExt}${ext}`;
             try {
+                // Add headers here too if authentication is needed for images
+                // Note: /file= might not strictly require them depending on config, but safer to omit or test
                 const res = await fetch(url, { method: 'HEAD' });
                 if (res.ok) {
                     return { 

@@ -1028,3 +1028,205 @@ input[readonly], textarea[readonly] {
     color: var(--success); /* #00e676 */
     filter: drop-shadow(0 0 4px var(--success));
 }
+
+/* =========================================
+   14. CONNECTION SYSTEM ENHANCEMENTS
+   ========================================= */
+
+/* Connection Button States */
+.connection-btn {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.connection-btn.connecting {
+    background: rgba(255, 152, 0, 0.2);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    animation: pulse 1.5s infinite;
+}
+
+.connection-btn.connected {
+    background: rgba(0, 230, 118, 0.2);
+    border-color: var(--success);
+    color: var(--success);
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+}
+
+.connection-btn.disconnected {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: var(--error);
+    color: var(--error);
+}
+
+/* Enhanced Indicator States */
+.indicator.connecting {
+    background: var(--accent-primary);
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.indicator.connected {
+    background: var(--success);
+    box-shadow: 0 0 12px var(--success);
+}
+
+.indicator.disconnected {
+    background: var(--error);
+    box-shadow: 0 0 8px var(--error);
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* =========================================
+   15. SETTINGS PAGE STYLING
+   ========================================= */
+
+#view-cfg {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#view-cfg .glass-box {
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+}
+
+#view-cfg h3 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#view-cfg input[type="text"],
+#view-cfg input[type="number"] {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    font-family: monospace;
+    font-size: 14px;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+#view-cfg input[type="text"]:focus,
+#view-cfg input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
+}
+
+#view-cfg label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#view-cfg .col > div {
+    margin-bottom: 20px;
+}
+
+#view-cfg .col > div:last-child {
+    margin-bottom: 0;
+}
+
+/* Port inputs styling */
+#view-cfg input[type="number"] {
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Configuration sections */
+#view-cfg .col > div[style*="border-top"] {
+    border-top: 1px solid var(--border-color) !important;
+    padding-top: 20px !important;
+    margin-top: 20px !important;
+}
+
+/* Save button styling */
+#view-cfg button[onclick="saveConfiguration()"] {
+    height: 50px;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(var(--accent-primary-rgb), 0.3);
+}
+
+#view-cfg button[onclick="saveConfiguration()"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(var(--accent-primary-rgb), 0.4);
+}
+
+#view-cfg button[onclick="saveConfiguration()"]:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(var(--accent-primary-rgb), 0.3);
+}
+
+/* System buttons styling */
+#view-cfg button[onclick*="Battery"],
+#view-cfg button[onclick*="resetAppConfig"] {
+    border: 1px solid;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+#view-cfg button[onclick*="Battery"]:hover,
+#view-cfg button[onclick*="resetAppConfig"]:hover {
+    transform: translateY(-1px);
+}
+
+/* Protocol radio buttons */
+#view-cfg input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+    vertical-align: middle;
+    position: relative;
+}
+
+#view-cfg input[type="radio"]:hover {
+    transform: scale(1.1);
+}
+
+#view-cfg input[type="radio"]:checked {
+    background-color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+#view-cfg input[type="radio"]::before {
+    content: '';
+    display: none;
+}
+
+#view-cfg input[type="radio"]::after {
+    content: '';
+    display: none;
+}

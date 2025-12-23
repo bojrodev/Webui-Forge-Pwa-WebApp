@@ -68,13 +68,6 @@ window.switchTab = function(view) {
 }
 
 window.setMode = async function(mode) {
-    // FIX 2: Universal VRAM Unload on Mode Switch (Restored behavior)
-    if (currentMode !== mode) {
-        if (HOST) {
-            await unloadModel(true);
-        }
-    }
-
     currentMode = mode;
     const root = document.documentElement;
     const btnXL = document.getElementById('btn-xl');
