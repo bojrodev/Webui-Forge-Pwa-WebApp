@@ -1,6 +1,6 @@
 # Resolver: Native Android Client for WebUI Forge (Flux, SDXL & Qwen)
 
-![Version](https://img.shields.io/badge/Version-1.1-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.2-purple.svg)
 ![Platform](https://img.shields.io/badge/Platform-Android%2010+-green.svg)
 ![Backend](https://img.shields.io/badge/Backend-Forge%20Neo-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-red.svg)
