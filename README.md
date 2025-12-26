@@ -56,7 +56,7 @@ Unlike standard browser wrappers, Resolver is built with a **Hybrid Architecture
 * **Smart Expansion:** Integrates with local LLM servers (LM Studio, Ollama) to translate simple ideas into professional prompts.
 * **Recommended Models:** For best results, use either of our official **Uncensored** fine-tunes:
   * **[v2 (Uncensored)](https://huggingface.co/bojrodev/BojroPromptMaster_uncensored_v2-8B)**: The latest engine with improved logic and reduced refusals.
-  * **[v1 (Classic)](https://huggingface.co/bojrodev/BojroPromptMaster-v1-8B)**: The original reliable logic engine.
+  * **[v1 (Uncensored)](https://huggingface.co/bojrodev/BojroPromptMaster-v1-8B)**: The original reliable logic engine.
 * **Dynamic Mode Switching:** Automatically applies specialized system prompts for SDXL, Flux, and Qwen narratives.
 
 ---
