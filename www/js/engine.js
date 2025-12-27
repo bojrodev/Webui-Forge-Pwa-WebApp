@@ -127,6 +127,15 @@ function buildJobFromUI() {
             "scheduler": document.getElementById('xl_scheduler').value,
             "seed": parseInt(document.getElementById('xl_seed').value),
             "save_images": true,
+            // High Res Fix Injection
+            ...(document.getElementById('xl_hr_enable') && document.getElementById('xl_hr_enable').checked ? {
+                "enable_hr": true,
+                "hr_scale": parseFloat(document.getElementById('xl_hr_scale').value),
+                "hr_upscaler": document.getElementById('xl_hr_upscaler').value,
+                "hr_second_pass_steps": parseInt(document.getElementById('xl_hr_steps').value),
+                "denoising_strength": parseFloat(document.getElementById('xl_hr_denoise').value),
+                "hr_cfg": parseFloat(document.getElementById('xl_hr_cfg').value)
+            } : {}),
             "override_settings": overrides
         };
     } else {
@@ -155,7 +164,6 @@ function buildJobFromUI() {
             };
         }
         // --- NEW FLUX CACHE (FBC) LOGIC END ---
-        // --- NEW FLUX CACHE (FBC) LOGIC END ---
 
         payload = {
             "prompt": document.getElementById('flux_prompt').value,
@@ -171,7 +179,16 @@ function buildJobFromUI() {
             "scheduler": document.getElementById('flux_scheduler').value,
             "seed": parseInt(document.getElementById('flux_seed').value),
             "save_images": true,
-            "alwayson_scripts": scriptsPayload, // INJECT FBC ARGS HERE
+            "alwayson_scripts": scriptsPayload,
+            // High Res Fix Injection
+            ...(document.getElementById('flux_hr_enable') && document.getElementById('flux_hr_enable').checked ? {
+                "enable_hr": true,
+                "hr_scale": parseFloat(document.getElementById('flux_hr_scale').value),
+                "hr_upscaler": document.getElementById('flux_hr_upscaler').value,
+                "hr_second_pass_steps": parseInt(document.getElementById('flux_hr_steps').value),
+                "denoising_strength": parseFloat(document.getElementById('flux_hr_denoise').value),
+                "hr_cfg": parseFloat(document.getElementById('flux_hr_cfg').value)
+            } : {}),
             "override_settings": overrides
         };
     }

@@ -25,7 +25,7 @@ function loadHostIp() {
 }
 
 window.connect = async function(silent = false) {
-    // Use centralized configuration if available, otherwise fallback to legacy field
+    // Use centralized configuration if available
     if (connectionConfig.baseIp) {
         HOST = buildWebUIUrl();
     } else {
@@ -33,13 +33,25 @@ window.connect = async function(silent = false) {
         if (legacyField) {
             HOST = legacyField.value.replace(/\/$/, "");
         } else if (localStorage.getItem('bojroHostIp')) {
-            // Fallback to memory if input is missing
             HOST = localStorage.getItem('bojroHostIp');
         }
     }
     
-    const dot = document.getElementById('statusDot');
-    if (!silent && dot) dot.style.background = "yellow";
+    // TARGET THE BRICK BUTTON
+    const btn = document.getElementById('initEngineBtn');
+
+    // Visual State 1: Connecting (Green Wireframe Pulse)
+    if (btn) {
+        // Reset previous states
+        btn.classList.remove('active'); 
+        
+        if (!silent) {
+            // Use Lucide Icon instead of Emoji
+            btn.innerHTML = `<i data-lucide="cloud-lightning"></i> INITIALIZING...`;
+            btn.classList.add('connecting'); 
+            if(window.lucide) lucide.createIcons();
+        }
+    }
 
     try {
         if (LocalNotifications && !silent) {
@@ -54,27 +66,46 @@ window.connect = async function(silent = false) {
         });
         if (!res.ok) throw new Error("Status " + res.status);
 
-        if (dot) {
-            dot.style.background = "#00e676";
-            dot.classList.add('on');
+        // Visual State 2: Success (Orange Industrial Neon)
+        if (btn) {
+            btn.classList.remove('connecting'); // Stop Green Pulse
+            btn.classList.add('active');        // Start Orange Neon
+            btn.innerHTML = `<i data-lucide="zap"></i> INITIALIZED`;
+            if(window.lucide) lucide.createIcons();
         }
         
         localStorage.setItem('bojroHostIp', HOST);
         const genBtn = document.getElementById('genBtn');
         if(genBtn) genBtn.disabled = false;
 
-        // MODIFIED: Fetch everything EXCEPT LoRAs (Lazy load them)
-        await Promise.all([fetchModels(), fetchSamplers(), fetchVaes()]);
+        // Fetch all resources including Upscalers for High-Res Fix
+        await Promise.all([fetchModels(), fetchSamplers(), fetchVaes(), fetchUpscalers()]);
 
         if (!silent)
             if (Toast) Toast.show({
-                text: 'Server Linked Successfully',
+                text: 'Engine Linked Successfully',
                 duration: 'short',
                 position: 'center'
             });
     } catch (e) {
-        if (dot) dot.style.background = "#f44336";
-        if (!silent) alert("Failed: " + e.message);
+        // Visual State 3: Failure
+        if (btn) {
+            btn.classList.remove('connecting');
+            btn.classList.remove('active');
+            
+            if (!silent) {
+                btn.innerHTML = `<i data-lucide="x-circle"></i> FAILED`;
+                if(window.lucide) lucide.createIcons();
+                
+                alert("Failed: " + e.message);
+                
+                // Revert to Idle text after 2s
+                setTimeout(() => {
+                    btn.innerHTML = `<i data-lucide="zap-off"></i> INITIALIZE ENGINE`;
+                    if(window.lucide) lucide.createIcons();
+                }, 2000);
+            }
+        }
     }
 }
 
@@ -155,6 +186,23 @@ async function fetchSamplers() {
         if (window.Neo && window.Neo.populateSamplers) window.Neo.populateSamplers(data);
 
     } catch (e) {}
+}
+
+async function fetchUpscalers() {
+    try {
+        const res = await fetch(`${HOST}/sdapi/v1/upscalers`, { headers: getHeaders() });
+        const data = await res.json();
+        ['xl', 'flux', 'qwen'].forEach(mode => {
+            const el = document.getElementById(`${mode}_hr_upscaler`);
+            if (el) {
+                el.innerHTML = "";
+                data.forEach(u => el.appendChild(new Option(u.name, u.name)));
+                // Restore saved selection
+                const saved = localStorage.getItem(`bojro_${mode}_hr_upscaler`);
+                if (saved && Array.from(el.options).some(o => o.value === saved)) el.value = saved;
+            }
+        });
+    } catch (e) { console.warn("Upscaler fetch failed", e); }
 }
 
 async function fetchVaes() {
@@ -420,7 +468,7 @@ window.generateLlmPrompt = async function() {
 window.sendPowerSignal = async function() {
     const btn = document.getElementById('power-btn-mini');
     
-    // Use centralized configuration if available, otherwise fallback to legacy method
+    // Use centralized configuration if available
     let serverUrl;
     if (connectionConfig.baseIp) {
         serverUrl = buildWakeUrl();

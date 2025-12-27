@@ -15,19 +15,7 @@
     <script src="js/lucide.js"></script>
     <link rel="stylesheet" href="style.css">
     
-    <style>
-        .queue-section { margin-bottom: 20px; }
-        .queue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--input-border); }
-        .queue-label { font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .queue-zone { min-height: 60px; background: rgba(0,0,0,0.1); border-radius: 8px; padding: 5px; border: 1px dashed var(--input-border); transition: background 0.2s; }
-        .queue-zone.drag-over { background: rgba(0, 230, 118, 0.1); border-color: #00e676; }
-        .q-card { background: var(--glass-panel); border: 1px solid var(--glass-border); padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; touch-action: none; }
-        .q-card.dragging { opacity: 0.5; transform: scale(0.98); }
-        .q-handle { color: var(--text-muted); margin-right: 10px; cursor: grab; }
-        .q-details { flex: 1; }
-        .q-meta { font-size: 10px; color: var(--text-muted); }
-    </style>
-</head>
+    </head>
 <body>
 
     <div class="container">
@@ -40,16 +28,9 @@
 
         <div id="view-gen">
             <div class="glass-box" style="padding: 10px 20px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <i data-lucide="wifi" size="16" style="color:var(--text-muted)"></i>
-                        <span id="connectionStatus" style="font-family: monospace; font-size: 12px; color: var(--text-muted);">Not Connected</span>
-                    </div>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <button id="webuiLinkBtn" onclick="connectToWebUI()" class="btn-small connection-btn" style="font-size: 10px; min-width: 80px;">LINK</button>
-                        <div id="webuiStatusDot" class="indicator"></div>
-                    </div>
-                </div>
+                <button id="initEngineBtn" onclick="connect()" class="brick-btn">
+                    <i data-lucide="zap-off"></i> INITIALIZE ENGINE
+                </button>
 
                 <div class="row" style="border-top: 1px solid var(--input-border); border-bottom: 1px solid var(--input-border); padding: 10px 0; margin: 10px 0; justify-content: space-between;">
                     <label style="margin: 0; color: var(--accent-primary); font-weight: 900;">Use Bojro Dev Power On</label>
@@ -118,6 +99,36 @@
                     <button onclick="openLoraModal('xl')" class="btn-small dashed">+ ADD LORA</button>
                     <label><i data-lucide="shield-off" size="12"></i> Negative</label>
                     <textarea id="xl_neg" style="min-height: 50px;">bad quality,worst quality,worst detail</textarea>
+                </div>
+
+                <div class="glass-box" style="margin-bottom: 15px;">
+                    <div class="row" onclick="toggleGeneric('grp-xl-hr', 'arr-xl-hr', 'bojro_vis_xl_hr')" style="justify-content:space-between; cursor:pointer; margin-bottom:5px; align-items:center;">
+                        <div class="row" style="width:auto; gap:10px; align-items:center;">
+                            <label style="cursor:pointer; margin:0;"><i data-lucide="arrow-up-circle" size="12"></i> Hi-Res Fix</label>
+                            <input type="checkbox" id="xl_hr_enable" style="width:14px; height:14px;" onchange="saveHr('xl'); event.stopPropagation();">
+                        </div>
+                        <i id="arr-xl-hr" data-lucide="chevron-down" size="14" style="transition: transform 0.2s;"></i>
+                    </div>
+
+                    <div id="grp-xl-hr" class="hidden">
+                        <div class="row" style="justify-content:space-between; margin-bottom:10px; border-bottom:1px solid var(--input-border); padding-bottom:5px;">
+                            <span style="font-size:10px; color:var(--text-muted);">UPSCALING</span>
+                            <button onclick="resetHr('xl')" class="btn-icon" style="color:#f44336;" title="Reset Defaults"><i data-lucide="trash-2" size="12"></i></button>
+                        </div>
+                        <div class="col" style="margin-bottom:10px;">
+                            <label>Upscaler</label>
+                            <select id="xl_hr_upscaler" onchange="saveHr('xl')"><option>Loading...</option></select>
+                        </div>
+                        <div class="row" style="gap:10px;">
+                            <div class="col"><label>Scale By</label><input type="number" id="xl_hr_scale" value="1.5" step="0.1" onchange="saveHr('xl')"></div>
+                            <div class="col"><label>Steps</label><input type="number" id="xl_hr_steps" value="6" onchange="saveHr('xl')"></div>
+                        </div>
+                        <div class="row" style="gap:10px; margin-top:10px;">
+                            <div class="col"><label>Denoise</label><input type="number" id="xl_hr_denoise" value="0.4" step="0.05" onchange="saveHr('xl')"></div>
+                            <div class="col"><label>HR CFG</label><input type="number" id="xl_hr_cfg" value="1.0" step="0.5" onchange="saveHr('xl')"></div>
+                        </div>
+                    </div>
+                    <script>initGenericSectionClosed('grp-xl-hr', 'arr-xl-hr', 'bojro_vis_xl_hr')</script>
                 </div>
 
                 <div class="glass-box">
@@ -209,6 +220,36 @@
                     <button onclick="openLoraModal('flux')" class="btn-small dashed">+ ADD LORA</button>
                 </div>
                 
+                <div class="glass-box" style="margin-bottom: 15px;">
+                    <div class="row" onclick="toggleGeneric('grp-flux-hr', 'arr-flux-hr', 'bojro_vis_flux_hr')" style="justify-content:space-between; cursor:pointer; margin-bottom:5px; align-items:center;">
+                        <div class="row" style="width:auto; gap:10px; align-items:center;">
+                            <label style="cursor:pointer; margin:0;"><i data-lucide="arrow-up-circle" size="12"></i> Hi-Res Fix</label>
+                            <input type="checkbox" id="flux_hr_enable" style="width:14px; height:14px;" onchange="saveHr('flux'); event.stopPropagation();">
+                        </div>
+                        <i id="arr-flux-hr" data-lucide="chevron-down" size="14" style="transition: transform 0.2s;"></i>
+                    </div>
+
+                    <div id="grp-flux-hr" class="hidden">
+                        <div class="row" style="justify-content:space-between; margin-bottom:10px; border-bottom:1px solid var(--input-border); padding-bottom:5px;">
+                            <span style="font-size:10px; color:var(--text-muted);">UPSCALING</span>
+                            <button onclick="resetHr('flux')" class="btn-icon" style="color:#f44336;" title="Reset Defaults"><i data-lucide="trash-2" size="12"></i></button>
+                        </div>
+                        <div class="col" style="margin-bottom:10px;">
+                            <label>Upscaler</label>
+                            <select id="flux_hr_upscaler" onchange="saveHr('flux')"><option>Loading...</option></select>
+                        </div>
+                        <div class="row" style="gap:10px;">
+                            <div class="col"><label>Scale By</label><input type="number" id="flux_hr_scale" value="1.5" step="0.1" onchange="saveHr('flux')"></div>
+                            <div class="col"><label>Steps</label><input type="number" id="flux_hr_steps" value="6" onchange="saveHr('flux')"></div>
+                        </div>
+                        <div class="row" style="gap:10px; margin-top:10px;">
+                            <div class="col"><label>Denoise</label><input type="number" id="flux_hr_denoise" value="0.4" step="0.05" onchange="saveHr('flux')"></div>
+                            <div class="col"><label>HR CFG</label><input type="number" id="flux_hr_cfg" value="1.0" step="0.5" onchange="saveHr('flux')"></div>
+                        </div>
+                    </div>
+                    <script>initGenericSectionClosed('grp-flux-hr', 'arr-flux-hr', 'bojro_vis_flux_hr')</script>
+                </div>
+
                 <div class="glass-box">
                     <div class="row" onclick="toggleGeneric('grp-flux', 'arr-flux', 'bojro_vis_flux')" style="justify-content:space-between; cursor:pointer; margin-bottom:5px;">
                         <label style="cursor:pointer;"><i data-lucide="sliders" size="12"></i> Generation Params</label>
@@ -380,6 +421,36 @@
                     <button onclick="openLoraModal('qwen')" class="btn-small dashed">+ ADD LORA</button>
                     <label><i data-lucide="shield-off" size="12"></i> Negative</label>
                     <textarea id="qwen_neg" style="min-height: 50px;">bad quality, blur, watermark</textarea>
+                </div>
+
+                <div class="glass-box" style="margin-bottom: 15px;">
+                    <div class="row" onclick="toggleGeneric('grp-qwen-hr', 'arr-qwen-hr', 'bojro_vis_qwen_hr')" style="justify-content:space-between; cursor:pointer; margin-bottom:5px; align-items:center;">
+                        <div class="row" style="width:auto; gap:10px; align-items:center;">
+                            <label style="cursor:pointer; margin:0;"><i data-lucide="arrow-up-circle" size="12"></i> Hi-Res Fix</label>
+                            <input type="checkbox" id="qwen_hr_enable" style="width:14px; height:14px;" onchange="saveHr('qwen'); event.stopPropagation();">
+                        </div>
+                        <i id="arr-qwen-hr" data-lucide="chevron-down" size="14" style="transition: transform 0.2s;"></i>
+                    </div>
+
+                    <div id="grp-qwen-hr" class="hidden">
+                        <div class="row" style="justify-content:space-between; margin-bottom:10px; border-bottom:1px solid var(--input-border); padding-bottom:5px;">
+                            <span style="font-size:10px; color:var(--text-muted);">UPSCALING</span>
+                            <button onclick="resetHr('qwen')" class="btn-icon" style="color:#f44336;" title="Reset Defaults"><i data-lucide="trash-2" size="12"></i></button>
+                        </div>
+                        <div class="col" style="margin-bottom:10px;">
+                            <label>Upscaler</label>
+                            <select id="qwen_hr_upscaler" onchange="saveHr('qwen')"><option>Loading...</option></select>
+                        </div>
+                        <div class="row" style="gap:10px;">
+                            <div class="col"><label>Scale By</label><input type="number" id="qwen_hr_scale" value="1.5" step="0.1" onchange="saveHr('qwen')"></div>
+                            <div class="col"><label>Steps</label><input type="number" id="qwen_hr_steps" value="6" onchange="saveHr('qwen')"></div>
+                        </div>
+                        <div class="row" style="gap:10px; margin-top:10px;">
+                            <div class="col"><label>Denoise</label><input type="number" id="qwen_hr_denoise" value="0.4" step="0.05" onchange="saveHr('qwen')"></div>
+                            <div class="col"><label>HR CFG</label><input type="number" id="qwen_hr_cfg" value="1.0" step="0.5" onchange="saveHr('qwen')"></div>
+                        </div>
+                    </div>
+                    <script>initGenericSectionClosed('grp-qwen-hr', 'arr-qwen-hr', 'bojro_vis_qwen_hr')</script>
                 </div>
 
                 <div class="glass-box">

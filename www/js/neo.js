@@ -173,6 +173,18 @@ const Neo = {
             "override_settings": overrides
         };
 
+        // High-Res Fix Injection for Qwen
+        const hrEl = document.getElementById('qwen_hr_enable');
+        if (hrEl && hrEl.checked) {
+            payload.enable_hr = true;
+            payload.hr_scale = parseFloat(document.getElementById('qwen_hr_scale').value) || 1.5;
+            payload.hr_upscaler = document.getElementById('qwen_hr_upscaler').value;
+            payload.hr_second_pass_steps = parseInt(document.getElementById('qwen_hr_steps').value) || 6;
+            payload.denoising_strength = parseFloat(document.getElementById('qwen_hr_denoise').value) || 0.4;
+            // Note: 'hr_cfg' is often supported by Forge/A1111 payload even if not standard in original SD
+            payload.hr_cfg = parseFloat(document.getElementById('qwen_hr_cfg').value) || 1.0;
+        }
+
         return {
             mode: 'qwen',
             modelTitle: modelTitle,

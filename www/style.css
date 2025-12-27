@@ -1,7 +1,6 @@
 /* =========================================
    1. FONTS & VARIABLES
    ========================================= */
-/* Keep local font loading to ensure app looks correct offline */
 @font-face {
     font-family: 'Inter';
     font-style: normal;
@@ -29,7 +28,7 @@
     --bg-input-focus: #151515;    
     
     --text-main: #e0e0e0;
-    --text-muted: #888888;
+    --text-muted: #666666; /* Slightly darker for engraving contrast */
     --text-inverse: #000000;
     
     --border-color: #333333;
@@ -57,7 +56,7 @@
     --dock-height: 80px;
 }
 
-/* --- FLUX MODE OVERRIDES (Blue/Cyan Theme) --- */
+/* --- FLUX MODE OVERRIDES --- */
 [data-mode="flux"] {
     --bg-app: #050b14;
     --bg-panel: #0f1623;
@@ -75,14 +74,14 @@
 [data-theme="light"] {
     --bg-app: #f2f2f7;            /* iOS Light Gray */
     --bg-panel: #ffffff;          /* Pure White Panels */
-    --bg-input: #f0f0f5;          /* Light Grey Inputs */
-    --bg-input-focus: #e5e5ea;
+    --bg-input: #e5e5ea;          /* Darker grey for inputs to hold engraving */
+    --bg-input-focus: #d1d1d6;
 
     --text-main: #1c1c1e;
-    --text-muted: #6e6e73;
+    --text-muted: #8e8e93;
     --text-inverse: #ffffff;
 
-    --border-color: #d1d1d6;
+    --border-color: #c7c7cc;
     --border-active: #8e8e93;
 
     --accent-primary: #ff9500;    /* Slightly darker orange for contrast */
@@ -338,6 +337,118 @@ input[readonly], textarea[readonly] {
     cursor: not-allowed;
     border: 1px solid var(--border-color);
     text-shadow: none;
+}
+
+/* =======================================================
+   NEW BRICK BUTTON STYLE (INDUSTRIAL WIREFRAME + VECTORS)
+   ======================================================= */
+.brick-btn {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    
+    /* Layout: Centers Icon + Text */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px; 
+    
+    /* Typography */
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: clamp(14px, 5vw, 18px); 
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    white-space: nowrap; 
+    
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.4s ease;
+    margin-bottom: 15px;
+    outline: none;
+    
+    /* Deep Recessed Button Face */
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+
+    /* --- STATE 1: IDLE (THE ENGRAVED VOID) --- */
+    
+    /* TEXT: Hollow Gray Wireframe */
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-text-stroke: 1.2px var(--text-muted); 
+    
+    /* Shadow for depth (Top Shadow, Bottom Highlight) */
+    text-shadow: 
+        0px 1px 0px rgba(255, 255, 255, 0.05),
+        0px -1px 0px rgba(0, 0, 0, 0.8);
+}
+
+/* ICON SPECIFIC STYLING (The Thunder/Cloud) */
+.brick-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--text-muted); /* Gray Wireframe */
+    stroke-width: 2px;
+    fill: transparent;         /* Hollow Inside */
+    
+    /* Engraved Depth for the Icon */
+    filter: drop-shadow(0px 1px 0px rgba(255,255,255,0.05)) 
+            drop-shadow(0px -1px 0px rgba(0,0,0,0.8));
+    transition: all 0.4s ease;
+}
+
+.brick-btn:active {
+    transform: scale(0.98);
+}
+
+/* --- STATE 2: CONNECTING (GREEN PULSE) --- */
+.brick-btn.connecting {
+    border-color: #00e676;
+    background: rgba(0, 230, 118, 0.05); 
+    
+    /* Green Text Wireframe */
+    -webkit-text-stroke: 1.2px #00e676;
+    text-shadow: none;
+    
+    /* Green Icon Wireframe */
+    filter: drop-shadow(0 0 5px rgba(0, 230, 118, 0.6));
+}
+
+.brick-btn.connecting svg {
+    stroke: #00e676;
+    filter: drop-shadow(0 0 5px #00e676);
+    animation: pulse-icon 1s infinite alternate;
+}
+
+/* --- STATE 3: INITIALIZED (ORANGE INDUSTRIAL NEON) --- */
+.brick-btn.active {
+    background: #080808; /* Darkest black for contrast */
+    border-color: #ff9800; 
+    
+    /* Orange Text Wireframe */
+    -webkit-text-stroke: 1.5px #ff9800; 
+    text-shadow: none;
+    
+    /* Text Glow */
+    filter: drop-shadow(0 0 3px #ff9800) drop-shadow(0 0 8px rgba(255, 152, 0, 0.5));
+            
+    /* Inner Amber Ambient Light */
+    box-shadow: inset 0 0 40px rgba(255, 152, 0, 0.15);
+}
+
+.brick-btn.active svg {
+    stroke: #ff9800;
+    stroke-width: 2.5px; /* Thicker "Tube" when active */
+    
+    /* Intense Icon Glow */
+    filter: drop-shadow(0 0 5px #ff9800) 
+            drop-shadow(0 0 15px #ff5722);
+}
+
+@keyframes pulse-icon {
+    from { opacity: 0.5; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1.05); }
 }
 
 /* Icon Buttons (Round) */
@@ -981,7 +1092,6 @@ input[readonly], textarea[readonly] {
     display: none;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 
 /* =========================================
    13. BOJRO POWER BUTTON INTEGRATION (FIXED)

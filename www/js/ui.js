@@ -165,6 +165,8 @@ window.loadSavedPrompts = function() {
             el.value = saved;
         }
     });
+    // Init High-Res Fix settings
+    window.initHr();
 }
 
 window.saveTrident = function() {
@@ -448,7 +450,63 @@ window.toggleFbcSection = function() {
     }
 }
 
-// --- GENERIC SECTION TOGGLER (Open by Default) ---
+// --- HIGH-RES FIX LOGIC ---
+
+window.resetHr = function(mode) {
+    // Default values: steps 6, Cfg 1 and denoise to 0.4
+    document.getElementById(`${mode}_hr_steps`).value = 6;
+    document.getElementById(`${mode}_hr_cfg`).value = 1.0;
+    document.getElementById(`${mode}_hr_denoise`).value = 0.4;
+    saveHr(mode);
+    if (Toast) Toast.show({ text: 'High-Res Defaults Loaded', duration: 'short' });
+}
+
+window.saveHr = function(mode) {
+    localStorage.setItem(`bojro_${mode}_hr_enable`, document.getElementById(`${mode}_hr_enable`).checked);
+    localStorage.setItem(`bojro_${mode}_hr_upscaler`, document.getElementById(`${mode}_hr_upscaler`).value);
+    localStorage.setItem(`bojro_${mode}_hr_steps`, document.getElementById(`${mode}_hr_steps`).value);
+    localStorage.setItem(`bojro_${mode}_hr_denoise`, document.getElementById(`${mode}_hr_denoise`).value);
+    localStorage.setItem(`bojro_${mode}_hr_scale`, document.getElementById(`${mode}_hr_scale`).value);
+    localStorage.setItem(`bojro_${mode}_hr_cfg`, document.getElementById(`${mode}_hr_cfg`).value);
+}
+
+window.initHr = function() {
+    ['xl', 'flux', 'qwen'].forEach(mode => {
+        // Load Enable State
+        const sEnable = localStorage.getItem(`bojro_${mode}_hr_enable`);
+        const elEnable = document.getElementById(`${mode}_hr_enable`);
+        if (elEnable) elEnable.checked = (sEnable === 'true');
+
+        // Load Values (with defaults if missing)
+        const loadVal = (id, def) => {
+            const el = document.getElementById(`${mode}_hr_${id}`);
+            const saved = localStorage.getItem(`bojro_${mode}_hr_${id}`);
+            if (el) el.value = saved !== null ? saved : def;
+        };
+
+        loadVal('steps', 6);
+        loadVal('cfg', 1.0);
+        loadVal('denoise', 0.4);
+        loadVal('scale', 1.5);
+        // Upscaler is loaded in network.js fetchUpscalers
+    });
+}
+
+// --- GENERIC SECTION TOGGLER ---
+
+window.initGenericSectionClosed = function(contentId, arrowId, storageKey) {
+    const savedState = localStorage.getItem(storageKey);
+    const content = document.getElementById(contentId);
+    const arrow = document.getElementById(arrowId);
+    // Default CLOSED. Only open if saved as 'open'
+    if (savedState === 'open') {
+        content.classList.remove('hidden');
+        arrow.style.transform = 'rotate(0deg)';
+    } else {
+        content.classList.add('hidden');
+        arrow.style.transform = 'rotate(-90deg)';
+    }
+}
 
 window.toggleGeneric = function(contentId, arrowId, storageKey) {
     const content = document.getElementById(contentId);
