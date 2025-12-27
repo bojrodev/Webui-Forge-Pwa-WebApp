@@ -183,6 +183,8 @@ const Neo = {
             payload.denoising_strength = parseFloat(document.getElementById('qwen_hr_denoise').value) || 0.4;
             // Note: 'hr_cfg' is often supported by Forge/A1111 payload even if not standard in original SD
             payload.hr_cfg = parseFloat(document.getElementById('qwen_hr_cfg').value) || 1.0;
+            // FIX: Add hr_additional_modules to prevent NoneType error in processing.py
+            payload.hr_additional_modules = ["Use same choices"]; 
         }
 
         return {

@@ -134,7 +134,8 @@ function buildJobFromUI() {
                 "hr_upscaler": document.getElementById('xl_hr_upscaler').value,
                 "hr_second_pass_steps": parseInt(document.getElementById('xl_hr_steps').value),
                 "denoising_strength": parseFloat(document.getElementById('xl_hr_denoise').value),
-                "hr_cfg": parseFloat(document.getElementById('xl_hr_cfg').value)
+                "hr_cfg": parseFloat(document.getElementById('xl_hr_cfg').value),
+                "hr_additional_modules": ["Use same choices"]
             } : {}),
             "override_settings": overrides
         };
@@ -187,7 +188,8 @@ function buildJobFromUI() {
                 "hr_upscaler": document.getElementById('flux_hr_upscaler').value,
                 "hr_second_pass_steps": parseInt(document.getElementById('flux_hr_steps').value),
                 "denoising_strength": parseFloat(document.getElementById('flux_hr_denoise').value),
-                "hr_cfg": parseFloat(document.getElementById('flux_hr_cfg').value)
+                "hr_cfg": parseFloat(document.getElementById('flux_hr_cfg').value),
+                "hr_additional_modules": ["Use same choices"]
             } : {}),
             "override_settings": overrides
         };
@@ -428,7 +430,15 @@ async function runJob(job, isBatch = false) {
         btn.innerText = "PROCESSING...";
         await updateBatchNotification("Starting Generation", true, "Initializing...");
 
-        const jobTotalSteps = (job.payload.n_iter || 1) * job.payload.steps;
+        // --- NEW STEP CALCULATION LOGIC ---
+        let perImageSteps = job.payload.steps;
+        if (job.payload.enable_hr) {
+            // Add second pass steps if HR is enabled
+            // Note: If hr_second_pass_steps is 0/null in payload, Forge usually does 50% of base
+            // But since we send explicit values from UI, we trust the payload.
+            perImageSteps += (job.payload.hr_second_pass_steps || 0);
+        }
+        const jobTotalSteps = (job.payload.n_iter || 1) * perImageSteps;
 
         const progressInterval = setInterval(async () => {
             try {
@@ -439,11 +449,14 @@ async function runJob(job, isBatch = false) {
                 if (data.state && data.state.sampling_steps > 0) {
                     const currentJobIndex = data.state.job_no || 0;
                     const currentStepInBatch = data.state.sampling_step;
-                    const jobStep = (currentJobIndex * job.payload.steps) + currentStepInBatch;
-                    btn.innerText = `Step ${jobStep}/${jobTotalSteps}`;
-                    const msg = `Step ${jobStep} / ${jobTotalSteps}`;
+                    
+                    // We don't recalculate jobStep with the complex formula to avoid desync
+                    // data.state.sampling_step is cumulative for HR jobs usually
+                    const msg = `Step ${currentStepInBatch} / ${jobTotalSteps}`;
+                    btn.innerText = msg;
+                    
                     if (isBatch) {
-                        const actualTotal = currentBatchProgress + jobStep;
+                        const actualTotal = currentBatchProgress + currentStepInBatch;
                         document.getElementById('queueProgressText').innerText = `Step ${actualTotal} / ${totalBatchSteps}`;
                         updateBatchNotification("Batch Running", false, `Step ${actualTotal} / ${totalBatchSteps}`);
                     } else {
