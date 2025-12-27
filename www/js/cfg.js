@@ -408,6 +408,8 @@ document.addEventListener('DOMContentLoaded', function() {
         loadConnectionConfig();
     }
     
+    loadModelVisibility(); 
+
     // Initialize connection status displays
     updateConnectionStatus('webui', 'disconnected');
     updateConnectionStatus('llm', 'disconnected');
@@ -431,3 +433,44 @@ window.switchTab = function(view) {
         loadConnectionConfig();
     }
 };
+
+// --- INTERFACE VISIBILITY LOGIC ---
+
+window.loadModelVisibility = function() {
+    // Default to all true if not saved
+    const saved = localStorage.getItem('bojro_model_visibility');
+    const config = saved ? JSON.parse(saved) : { xl: true, flux: true, qwen: true };
+
+    // Set Checkbox States
+    const elXl = document.getElementById('cfgShowXl');
+    const elFlux = document.getElementById('cfgShowFlux');
+    const elQwen = document.getElementById('cfgShowQwen');
+
+    if (elXl) elXl.checked = config.xl;
+    if (elFlux) elFlux.checked = config.flux;
+    if (elQwen) elQwen.checked = config.qwen;
+
+    // Apply to UI
+    applyModelVisibility(config);
+}
+
+window.saveModelVisibility = function() {
+    const config = {
+        xl: document.getElementById('cfgShowXl').checked,
+        flux: document.getElementById('cfgShowFlux').checked,
+        qwen: document.getElementById('cfgShowQwen').checked
+    };
+    localStorage.setItem('bojro_model_visibility', JSON.stringify(config));
+    applyModelVisibility(config);
+}
+
+function applyModelVisibility(config) {
+    const btnXl = document.getElementById('btn-xl');
+    const btnFlux = document.getElementById('btn-flux');
+    const btnQwen = document.getElementById('btn-qwen');
+
+    // Toggle hidden class based on config
+    if (btnXl) config.xl ? btnXl.classList.remove('hidden') : btnXl.classList.add('hidden');
+    if (btnFlux) config.flux ? btnFlux.classList.remove('hidden') : btnFlux.classList.add('hidden');
+    if (btnQwen) config.qwen ? btnQwen.classList.remove('hidden') : btnQwen.classList.add('hidden');
+}

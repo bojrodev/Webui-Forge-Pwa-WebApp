@@ -371,10 +371,10 @@ window.generateLlmPrompt = async function() {
                 { role: "system", content: sysPrompt }, 
                 { role: "user", content: inputVal }
             ],
-            temperature: 0.7,
-            max_tokens: 250,
+            temperature: 0.8,
+            max_tokens: 300,
             top_p: 0.9,
-            frequency_penalty: 0.5,
+            repetition_penalty: 1.2,
             stream: false
         };
         

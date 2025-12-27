@@ -432,3 +432,53 @@ window.useLlmPrompt = function() {
         });
     }
 }
+
+
+// FBc Collapse Toggle
+window.toggleFbcSection = function() {
+    const content = document.getElementById('fbc-settings-content');
+    const arrow = document.getElementById('fbc-arrow');
+    
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        arrow.style.transform = 'rotate(180deg)';
+    } else {
+        content.classList.add('hidden');
+        arrow.style.transform = 'rotate(0deg)';
+    }
+}
+
+// --- GENERIC SECTION TOGGLER (Open by Default) ---
+
+window.toggleGeneric = function(contentId, arrowId, storageKey) {
+    const content = document.getElementById(contentId);
+    const arrow = document.getElementById(arrowId);
+    const isHidden = content.classList.contains('hidden');
+
+    if (isHidden) {
+        // Open it
+        content.classList.remove('hidden');
+        arrow.style.transform = 'rotate(0deg)'; // Arrow points down (v)
+        localStorage.setItem(storageKey, 'open');
+    } else {
+        // Close it
+        content.classList.add('hidden');
+        arrow.style.transform = 'rotate(-90deg)'; // Arrow points right (>)
+        localStorage.setItem(storageKey, 'closed');
+    }
+}
+
+window.initGenericSection = function(contentId, arrowId, storageKey) {
+    const savedState = localStorage.getItem(storageKey);
+    const content = document.getElementById(contentId);
+    const arrow = document.getElementById(arrowId);
+
+    // Default is OPEN. Only close if explicitly saved as 'closed'
+    if (savedState === 'closed') {
+        content.classList.add('hidden');
+        arrow.style.transform = 'rotate(-90deg)';
+    } else {
+        content.classList.remove('hidden');
+        arrow.style.transform = 'rotate(0deg)';
+    }
+}

@@ -137,6 +137,26 @@ function buildJobFromUI() {
         if (bits) overrides["forge_unet_storage_dtype"] = bits;
         
         const distCfg = parseFloat(document.getElementById('flux_distilled').value);
+
+        // --- NEW FLUX CACHE (FBC) LOGIC START ---
+        let scriptsPayload = {};
+        const useCache = document.getElementById('flux_cache_enable').checked;
+        
+        if (useCache) {
+            scriptsPayload["First Block Cache / TeaCache"] = {
+                "args": [
+                    true,                                           // Enabled
+                    "First Block Cache",                            // Method
+                    parseFloat(document.getElementById('flux_cache_threshold').value), // Threshold
+                    parseInt(document.getElementById('flux_cache_start').value),       // Uncached start
+                    parseInt(document.getElementById('flux_cache_max').value),         // Max consecutive
+                    document.getElementById('flux_cache_last').checked                 // Skip last step? (Checked = True)
+                ]
+            };
+        }
+        // --- NEW FLUX CACHE (FBC) LOGIC END ---
+        // --- NEW FLUX CACHE (FBC) LOGIC END ---
+
         payload = {
             "prompt": document.getElementById('flux_prompt').value,
             "negative_prompt": "",
@@ -151,6 +171,7 @@ function buildJobFromUI() {
             "scheduler": document.getElementById('flux_scheduler').value,
             "seed": parseInt(document.getElementById('flux_seed').value),
             "save_images": true,
+            "alwayson_scripts": scriptsPayload, // INJECT FBC ARGS HERE
             "override_settings": overrides
         };
     }
