@@ -514,3 +514,69 @@ window.sendPowerSignal = async function() {
         if(btn) btn.classList.remove('active');
     }
 }
+
+// --- NEW KILL SIGNAL FUNCTION ---
+window.sendStopSignal = async function() {
+    const btn = document.getElementById('kill-btn-mini');
+    
+    // 1. Resolve URL - Robust Method
+    // We prioritize the localStorage 'bojro_power_ip' if available as it's directly set by the modal
+    // OR we reconstruct it from the config object if that exists.
+    
+    let serverUrl = localStorage.getItem('bojro_power_ip');
+
+    if (!serverUrl && typeof connectionConfig !== 'undefined' && connectionConfig.baseIp) {
+        // Fallback: Construct it manually if local storage is empty but config exists
+        const protocol = connectionConfig.protocol || 'http';
+        const port = connectionConfig.portWake || '5000';
+        serverUrl = `${protocol}://${connectionConfig.baseIp}:${port}`;
+    }
+
+    if (!serverUrl) {
+        alert("Please set the PC Server IP in settings first!");
+        if (typeof togglePowerSettings === 'function') togglePowerSettings();
+        return;
+    }
+
+    // Cleaning
+    serverUrl = serverUrl.replace(/\/$/, "");
+
+    // 2. Visual Feedback
+    if(btn) btn.classList.add('active');
+    
+    if (typeof Toast !== 'undefined') Toast.show({
+        text: 'Sending KILL Signal...',
+        duration: 'short'
+    });
+
+    try {
+        // 3. Send Request
+        // We target /power/off with CORS enabled
+        console.log(`Sending Stop Signal to: ${serverUrl}/power/off`);
+        
+        const response = await fetch(`${serverUrl}/power/off`, {
+            method: 'POST',
+            mode: 'cors', // Important for local network requests
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (typeof Toast !== 'undefined') Toast.show({
+            text: 'System Halted Successfully',
+            duration: 'short'
+        });
+
+    } catch (error) {
+        console.error("Kill Signal Error:", error);
+        if (typeof Toast !== 'undefined') Toast.show({
+            text: 'Signal Failed (Check Console)',
+            duration: 'short'
+        });
+        alert("Connection Failed: " + error.message);
+    } finally {
+        setTimeout(() => {
+            if(btn) btn.classList.remove('active');
+        }, 500);
+    }
+}
