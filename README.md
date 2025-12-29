@@ -18,24 +18,24 @@ Unlike standard browser wrappers, Resolver is built with a **Hybrid Architecture
 <table>
   <tr>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/73bc7ab2-47ea-4598-9757-c86be9ad03c7" width="200" /><br />
-      <b>Home / SDXL</b>
+      <img src="https://github.com/user-attachments/assets/51de1657-b0d9-42f9-b661-8b12cf00b8b2" width="200" /><br />
+      <b>Home / SDXL TAB</b>
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/e132a4d3-e33a-479f-af4a-566bd81b04a5" width="200" /><br />
+      <img src="https://github.com/user-attachments/assets/eeaf30ac-7b93-4791-b82f-2e67159e0350" width="200" /><br />
       <b>Flux UI</b>
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/4147b392-b351-4e70-8716-38c4c2e7cc30" width="200" /><br />
-      <b>LoRA Manager</b>
+      <img src="https://github.com/user-attachments/assets/659ff2d9-f8e1-42a8-a73a-01b9273ab574" width="200" /><br />
+      <b>QWEN / Z-IMAGE TAB</b>
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/b489e035-32e3-4392-87b8-fbcfde706134" width="200" /><br />
+      <img src="https://github.com/user-attachments/assets/39b24f96-6363-43b0-8d40-2bff331b84b3" width="200" /><br />
       <b>Inpainting</b>
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/38ab45ce-663c-4b45-91e8-ba77be3f67d9" width="200" /><br />
-      <b>Qwen Turbo</b>
+      <img src="https://github.com/user-attachments/assets/fa8f194d-8bce-4b36-b462-61066007e8b7" width="200" /><br />
+      <b>Lora Tab</b>
     </td>
   </tr>
   <tr>
