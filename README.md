@@ -5,7 +5,9 @@
 ![Backend](https://img.shields.io/badge/Backend-Forge%20Neo-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-red.svg)
 
-**Resolver** is a high-performance, native Android interface for [Stable Diffusion WebUI Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo). 
+**Resolver** is a high-performance, native Android interface for [Stable Diffusion WebUI Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo).
+
+**New in v1.2:** Resolver now features a centralized **Configuration (CFG)** tab, allowing for seamless switching between Local LAN (HTTP) and External Cloud/Ngrok (HTTPS) connections, custom service ports, and a new remote "Kill Switch" for system management.
 
 Unlike standard browser wrappers, Resolver is built with a **Hybrid Architecture** (Capacitor 6.0 + Vanilla JS) and utilizes **Native Android Foreground Services** to ensure your generation queues never die in the background.
 
@@ -42,9 +44,14 @@ Unlike standard browser wrappers, Resolver is built with a **Hybrid Architecture
 
 ## 🚀 Key Features
 
+### ⚡ v1.2 Connectivity & Power
+* **Smart Connection Mode:** Toggle instantly between **Local Mode** (Auto-appends ports to local IPs) and **External Mode** (Enforces HTTPS for Ngrok/Cloud tunnels, ignoring ports).
+* **Custom Service Ports:** Define independent ports for your WebUI (Default: `7860`), LLM Server (`1234`), and Power Service (`5000`) inside the new CFG tab.
+* **Remote Wake & Kill:** Use the "Bojro Dev Power" controls to send Wake-on-LAN signals or a **KILL!** signal to immediately halt the backend server from your phone.
+
 ### ⚡ True Background Generation
 * **Native Foreground Service:** Uses a Java-based service and Wake Locks to keep WebSocket connections alive during long Flux GGUF workflows or massive batch queues, even when the screen is off.
-* **Queue Persistence:** Features a robust state management system for Ongoing, Next, and Completed jobs.
+* **Queue Persistence:** robust state management system for Ongoing, Next, and Completed jobs.
 
 ### 🎨 Advanced Generation Engines
 * **Flux GGUF Optimized:** Includes dedicated selectors for VAE, CLIP, and T5-XXL models, with support for specific quantization bits (bnb-nf4, fp8-e4m3fn, etc.).
@@ -54,9 +61,6 @@ Unlike standard browser wrappers, Resolver is built with a **Hybrid Architecture
 
 ### 🧠 Magic Prompt (Local LLM)
 * **Smart Expansion:** Integrates with local LLM servers (LM Studio, Ollama) to translate simple ideas into professional prompts.
-* **Recommended Models:** For best results, use either of our official **Uncensored** fine-tunes:
-  * **[v2 (Uncensored)](https://huggingface.co/bojrodev/BojroPromptMaster_uncensored_v2-8B)**: The latest engine with improved logic and reduced refusals.
-  * **[v1 (Uncensored)](https://huggingface.co/bojrodev/BojroPromptMaster-v1-8B)**: The original reliable logic engine.
 * **Dynamic Mode Switching:** Automatically applies specialized system prompts for SDXL, Flux, and Qwen narratives.
 
 ---
@@ -71,20 +75,21 @@ To use the "Magic Prompt" feature, it is highly recommended to host a **Bojro Pr
 2.  **Run Server:** Load the model into **LM Studio** or **Ollama** and ensure it is serving on your local network (e.g., `http://192.168.1.10:1234`).
 3.  **Connect App:**
     * In Resolver, tap the **Bot Icon** to open the Magic Prompt modal.
-    * Enter your LLM Server URL and tap **Connect**.
+    * Enter your LLM Server URL (or configure the Port in the **CFG Tab**) and tap **Connect**.
     * The app will automatically use specialized system instructions for each image generation mode.
 
 ---
 
 ## 🔌 Remote PC Wake (The Power Button)
 
-Resolver features a remote power signal to start your WebUI directly from the app header.
+Resolver features a remote power signal to start (or stop) your WebUI directly from the app home screen.
 
-**Requirement:** Requires the `BojroPowerv2portable.exe` helper running on your PC.
+**Requirement:** Requires the `BojroPowerv3portable.exe` helper running on your PC.
 
 1.  **Run Helper:** Execute the helper app on your PC.
-2.  **Configure:** Tap the **Settings Gear** next to the Power Button (ტ) in Resolver and enter the PC's Local IP.
-3.  **Wake:** Tap the Power Button to send a start signal and launch your services remotely.
+2.  **Configure:** Go to the **CFG Tab** in Resolver and set your **Wake Port** (Default: `5000`).
+3.  **Wake:** Tap the Power Button (ტ) to send a start signal.
+4.  **Kill:** Tap the **KILL!** button to remotely stop the services.
 
 ---
 
@@ -101,7 +106,7 @@ Resolver features a remote power signal to start your WebUI directly from the ap
 1.  Install **WebUI Forge (Neo)** on your PC.
 2.  Download the latest `.apk` from the **Releases Page**.
 3.  Ensure your phone and PC are on the same Wi-Fi.
-4.  Enter your PC's IP and tap **LINK**.
+4.  Navigate to the **CFG Tab**, enter your PC's IP, and tap **Save Configuration**.
 
 ### Building from Source
 ```bash
