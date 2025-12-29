@@ -792,18 +792,12 @@
                         <i id="arr-cfg-base" data-lucide="chevron-down" size="14" style="transition: transform 0.2s;"></i>
                     </div>
                     <div id="cfg-base-link" class="col" style="gap: 12px; padding: 10px 0;">
-                        <div class="radio-group" style="display: flex; gap: 20px; align-items: center; padding: 5px 0;">
-                            <div class="radio-item" style="display: flex; align-items: center; gap: 8px;">
-                                <input type="radio" id="httpProtocol" name="protocol" value="http" checked style="width: 18px; height: 18px; cursor: pointer;">
-                                <label for="httpProtocol" style="margin: 0; font-weight: 500; color: var(--text-main); text-transform: none; font-size: 13px;">HTTP</label>
-                            </div>
-                            <div class="radio-item" style="display: flex; align-items: center; gap: 8px;">
-                                <input type="radio" id="httpsProtocol" name="protocol" value="https" style="width: 18px; height: 18px; cursor: pointer;">
-                                <label for="httpsProtocol" style="margin: 0; font-weight: 500; color: var(--text-main); text-transform: none; font-size: 13px;">HTTPS</label>
-                            </div>
+                        <div class="row" style="justify-content: space-between; align-items: center; padding: 5px 0 10px 0;">
+                            <label for="cfgModeSwitch" style="margin: 0; color: var(--text-main); font-size: 13px;">External Link Toggle</label>
+                            <input type="checkbox" id="cfgModeSwitch" class="bojro-switch">
                         </div>
-                        <input type="text" id="cfgBaseIp" placeholder="e.g. 192.168.1.50" style="font-family: monospace;">
-                        <p style="font-size: 10px; color: var(--text-muted); margin: 0;">Enter IP address or domain (without protocol prefix).</p>
+                        <input type="text" id="cfgBaseIp" placeholder="e.g. 192.168.0.139 or https://..." style="font-family: monospace;">
+                        <p style="font-size: 10px; color: var(--text-muted); margin: 0;">Enter IP http (local) or full https URL (external).</p>
                     </div>
                 </div>
 

@@ -601,6 +601,29 @@ input[readonly], textarea[readonly] {
     pointer-events: none;
 }
 
+/* --- NOTIFICATION BADGE (Added Fix) --- */
+.badge {
+    position: absolute;
+    top: -6px;            /* Move up to float over the shoulder */
+    right: -8px;          /* Move right to clear the icon */
+    background: var(--accent-primary);
+    color: #000000;       /* High contrast text */
+    font-size: 10px;      /* Small but legible */
+    font-weight: 800;
+    height: 16px;
+    min-width: 16px;      /* Ensures circles for "1" but pills for "10" */
+    border-radius: 10px;  /* Pill shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;       /* Breathing room for double digits */
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    border: 1px solid var(--bg-panel); /* Subtle cutout effect */
+    pointer-events: none; /* Let clicks pass through to the button */
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 .glass-dock {
     pointer-events: auto;
     background: var(--bg-panel);

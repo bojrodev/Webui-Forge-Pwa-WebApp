@@ -22,14 +22,10 @@ function loadConnectionConfig() {
     const elWake = document.getElementById('cfgPortWake');
     if (elWake) elWake.value = connectionConfig.portWake || 5000;
     
-    // Update protocol selection
-    const protocol = connectionConfig.protocol || 'http';
-    if (protocol === 'https') {
-        const rHttps = document.getElementById('httpsProtocol');
-        if (rHttps) rHttps.checked = true;
-    } else {
-        const rHttp = document.getElementById('httpProtocol');
-        if (rHttp) rHttp.checked = true;
+    // Update Toggle Switch for Remote/External Mode
+    const elMode = document.getElementById('cfgModeSwitch');
+    if (elMode) {
+        elMode.checked = connectionConfig.isRemote || false;
     }
 }
 
@@ -38,53 +34,57 @@ function saveConnectionConfig() {
     localStorage.setItem('bojroConnectionConfig', JSON.stringify(connectionConfig));
 }
 
-// Build full URLs from base IP and ports
-function buildWebUIUrl() {
+// Helper to construct URLs based on Mode (Local vs External)
+function constructServiceUrl(port) {
     if (!connectionConfig.baseIp) return '';
     
-    let url = connectionConfig.baseIp;
-    // Only add port if it's specified and not already in URL
-    if (connectionConfig.portWebUI && connectionConfig.portWebUI !== null && !url.includes(':')) {
-        url += `:${connectionConfig.portWebUI}`;
+    let url = connectionConfig.baseIp.trim();
+    
+    // Clean up trailing slash just in case
+    url = url.replace(/\/$/, "");
+
+    if (connectionConfig.isRemote) {
+        // --- EXTERNAL MODE (HTTPS, Ignore Ports) ---
+        
+        // Ensure protocol is HTTPS
+        if (url.startsWith("http://")) {
+            url = url.replace("http://", "https://");
+        } else if (!url.startsWith("https://")) {
+            url = "https://" + url;
+        }
+        
+        // Return strictly the URL (ngrok/cloud usually handles routing without ports)
+        return url;
+
+    } else {
+        // --- LOCAL MODE (HTTP, Append Port) ---
+        
+        // Strip any existing protocol to ensure we force HTTP
+        url = url.replace(/^https?:\/\//, '');
+        
+        // Ensure Port is appended
+        // We check if the remaining string already has a port (contains a colon)
+        // logic: 192.168.1.5 -> no colon -> add port
+        // logic: 192.168.1.5:8888 -> has colon -> keep existing
+        if (port && !url.includes(':')) {
+            url += `:${port}`;
+        }
+        
+        return `http://${url}`;
     }
-    // Add protocol from user selection
-    const protocol = connectionConfig.protocol || 'http';
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = `${protocol}://${url}`;
-    }
-    return url;
+}
+
+// Build full URLs from base IP and ports
+function buildWebUIUrl() {
+    return constructServiceUrl(connectionConfig.portWebUI || 7860);
 }
 
 function buildLlmUrl() {
-    if (!connectionConfig.baseIp) return '';
-    
-    let url = connectionConfig.baseIp;
-    // Only add port if it's specified and not already in URL
-    if (connectionConfig.portLlm && connectionConfig.portLlm !== null && !url.includes(':')) {
-        url += `:${connectionConfig.portLlm}`;
-    }
-    // Add protocol from user selection
-    const protocol = connectionConfig.protocol || 'http';
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = `${protocol}://${url}`;
-    }
-    return url;
+    return constructServiceUrl(connectionConfig.portLlm || 1234);
 }
 
 function buildWakeUrl() {
-    if (!connectionConfig.baseIp) return '';
-    
-    let url = connectionConfig.baseIp;
-    // Only add port if it's specified and not already in URL
-    if (connectionConfig.portWake && connectionConfig.portWake !== null && !url.includes(':')) {
-        url += `:${connectionConfig.portWake}`;
-    }
-    // Add protocol from user selection
-    const protocol = connectionConfig.protocol || 'http';
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = `${protocol}://${url}`;
-    }
-    return url;
+    return constructServiceUrl(connectionConfig.portWake || 5000);
 }
 
 // Update connection status display
@@ -113,7 +113,7 @@ function updateConnectionStatus(service, status) {
             btn.classList.add('connected');
             btn.innerText = 'CONNECTED';
             dot.classList.add('connected');
-            statusText.innerText = `Connected to ${connectionConfig.baseIp}:${connectionConfig.portWebUI}`;
+            statusText.innerText = `Connected to ${connectionConfig.baseIp}`;
             statusText.style.color = 'var(--success)';
         } else {
             btn.classList.add('disconnected');
@@ -153,14 +153,15 @@ function updateConnectionStatus(service, status) {
 // Settings page functions
 window.saveConfiguration = function() {
     const baseIp = document.getElementById('cfgBaseIp').value.trim();
-    const protocol = document.querySelector('input[name="protocol"]:checked').value;
+    const isRemote = document.getElementById('cfgModeSwitch').checked;
+    
     const portWebUI = document.getElementById('cfgPortWebUI').value ? parseInt(document.getElementById('cfgPortWebUI').value) : '';
     const portLlm = document.getElementById('cfgPortLlm').value ? parseInt(document.getElementById('cfgPortLlm').value) : '';
     const portWake = document.getElementById('cfgPortWake').value ? parseInt(document.getElementById('cfgPortWake').value) : '';
     
     // Validation
     if (!baseIp) {
-        alert('Please enter a PC IP address');
+        alert('Please enter an IP address or URL');
         return;
     }
     
@@ -181,7 +182,7 @@ window.saveConfiguration = function() {
     
     // Save configuration
     connectionConfig.baseIp = baseIp;
-    connectionConfig.protocol = protocol; // Save protocol selection
+    connectionConfig.isRemote = isRemote; // Save toggle state
     connectionConfig.portWebUI = portWebUI !== '' ? portWebUI : null; 
     connectionConfig.portLlm = portLlm !== '' ? portLlm : null;    
     connectionConfig.portWake = portWake !== '' ? portWake : null; 
@@ -189,7 +190,7 @@ window.saveConfiguration = function() {
     
     saveConnectionConfig();
     
-    // Update global HOST variable for backward compatibility
+    // Update global HOST variable
     HOST = buildWebUIUrl();
     
     // Update legacy localStorage keys for backward compatibility
@@ -222,6 +223,7 @@ window.resetAppConfig = function() {
             portWebUI: 7860,
             portLlm: 1234,
             portWake: 5000,
+            isRemote: false,
             isConfigured: false
         };
         
@@ -346,11 +348,6 @@ window.connectToLlmService = async function() {
         updateConnectionStatus('llm', 'disconnected');
         alert("Link Error: " + (e.message || JSON.stringify(e)));
     }
-}
-
-// Initialize protocol property if not exists
-if (!connectionConfig.protocol) {
-    connectionConfig.protocol = 'http'; // Default to HTTP
 }
 
 // Enhanced wake signal using centralized config
