@@ -40,24 +40,24 @@ Unlike standard browser wrappers, Resolver is built with a **Hybrid Architecture
   </tr>
   <tr>
     <td align="center">
-      <img src="https://placehold.co/200x440/1a1a1a/ffffff?text=Coming+Soon" width="200" /><br />
-      <b>Placeholder 1</b>
+      <img src="https://github.com/user-attachments/assets/f6770c4f-4f05-4a94-b5c2-062945531797" width="200" /><br />
+      <b>Configuration Tab</b>
     </td>
     <td align="center">
-      <img src="https://placehold.co/200x440/1a1a1a/ffffff?text=Coming+Soon" width="200" /><br />
-      <b>Placeholder 2</b>
+      <img src="https://github.com/user-attachments/assets/af49aabc-eb80-4b5b-845a-7c7f3b7483f8" width="200" /><br />
+      <b>Magic Prompt Tab</b>
     </td>
     <td align="center">
-      <img src="https://placehold.co/200x440/1a1a1a/ffffff?text=Coming+Soon" width="200" /><br />
-      <b>Placeholder 3</b>
+      <img src="https://github.com/user-attachments/assets/4575b557-e086-4238-a1df-ae154bd239f7" width="200" /><br />
+      <b>Gallery Tab</b>
     </td>
     <td align="center">
-      <img src="https://placehold.co/200x440/1a1a1a/ffffff?text=Coming+Soon" width="200" /><br />
-      <b>Placeholder 4</b>
+      <img src="https://github.com/user-attachments/assets/8475ea5d-28da-42e2-8bb4-04277bbd3cb9" width="200" /><br />
+      <b>Metadata viewer Tab</b>
     </td>
     <td align="center">
-      <img src="https://placehold.co/200x440/1a1a1a/ffffff?text=Coming+Soon" width="200" /><br />
-      <b>Placeholder 5</b>
+      <img src="https://github.com/user-attachments/assets/19ee57c1-d1f4-46e6-b2fc-a1c58e17fe63" width="200" /><br />
+      <b>Queue Tab</b>
     </td>
   </tr>
 </table>
