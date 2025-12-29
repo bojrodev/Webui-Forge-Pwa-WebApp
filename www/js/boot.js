@@ -11,15 +11,42 @@ window.onload = function() {
             lucide.createIcons();
         }
 
+        // FIX (Issue 1): Battery Optimization Check MOVED UP
+        // Performed early to ensure it appears regardless of loading errors elsewhere
+        if (!localStorage.getItem('bojroBatteryOpt')) {
+            const batteryModal = document.getElementById('batteryModal');
+            if (batteryModal) {
+                batteryModal.classList.remove('hidden');
+                console.log("Battery Modal Triggered");
+            }
+        }
+
         // 2. Initialize Database
         // (Defined in utils.js)
         if (typeof initDatabase === 'function') {
             initDatabase();
         }
 
-        // 3. Load Saved Settings & State
+        // 3. Load Centralized Configuration First
+        loadConnectionConfig();    // cfg.js
+        
+        // 4. First-Run Configuration Check
+        if (!connectionConfig.isConfigured) {
+            console.log("First run detected - showing configuration");
+            // Force CFG tab on first run
+            setTimeout(() => {
+                switchTab('cfg');
+                if (Toast) Toast.show({
+                    text: 'Welcome! Please configure your connection settings',
+                    duration: 'long',
+                    position: 'center'
+                });
+            }, 500);
+        }
+        
+        // 5. Load Saved Settings & State
         injectConfigModal();       // ui.js
-        loadHostIp();              // network.js
+        loadHostIp();              // network.js (now uses centralized config)
         loadQueueState();          // utils.js
         renderQueueAll();          // engine.js
         loadAutoDlState();         // ui.js
@@ -27,23 +54,61 @@ window.onload = function() {
         loadPowerSettings();       // ui.js
         loadSavedPrompts();        // ui.js - RESTORE PROMPTS
 
-        // 4. Setup Background & Notifications
+        // 6. Setup Background & Notifications
         setupBackgroundListeners(); // utils.js
         createNotificationChannel();// utils.js
 
-        // 5. Initialize Graphics Engine
+        // 7. Initialize Graphics Engine
         initMainCanvas();          // editor.js
         setupEditorEvents();       // editor.js
-
-        // 6. Battery Optimization Check
-        if (!localStorage.getItem('bojroBatteryOpt')) {
-            const batModal = document.getElementById('batteryModal');
-            if (batModal) batModal.classList.remove('hidden');
+        
+        // 8. Request Capacitor Notification Access (Android) - System Check
+        if (LocalNotifications) {
+            LocalNotifications.checkPermissions().then(perm => {
+                console.log("Notification Perm Status:", perm.display);
+            });
         }
+        
+        // 9. Acquire Wake Lock (Prevent screen sleep during generation)
+        if ("wakeLock" in navigator) {
+            navigator.wakeLock.request('screen').then(wakeLock => {
+                console.log("Wake lock acquired");
+                globalWakeLock = wakeLock;
+            }).catch(error => {
+                console.log("Wake lock not available:", error);
+            });
+        } else {
+            console.log("Wake Lock API not supported");
+        }
+        
+        // 10. Acquire WiFi Lock (Prevent WiFi disconnect during generation)
+        if ('connection' in navigator && 'saveData' in navigator.connection) {
+            try {
+                navigator.connection.saveData = false; // Request high power mode
+                console.log("WiFi lock enabled - high power mode");
+            } catch (error) {
+                console.log("WiFi lock not available:", error);
+            }
+        } else {
+            console.log("WiFi Lock API not supported");
+        }
+        
+        // 11. Release locks when app becomes visible again
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && globalWakeLock) {
+                console.log("Releasing wake lock - app visible");
+                globalWakeLock.release();
+                globalWakeLock = null;
+            }
+        });
 
-        // 7. Auto-Connect if IP is saved
-        if (document.getElementById('hostIp').value) {
-            console.log("Auto-connecting...");
+        // 12. Auto-Connect if configuration is complete
+        if (connectionConfig.isConfigured && connectionConfig.baseIp) {
+            console.log("Auto-connecting with centralized config...");
+            window.connect(true); // network.js (now uses centralized config)
+        } else if (document.getElementById('hostIp') && document.getElementById('hostIp').value) {
+            // Fallback to legacy auto-connect
+            console.log("Auto-connecting with legacy config...");
             window.connect(true); // network.js
         }
 

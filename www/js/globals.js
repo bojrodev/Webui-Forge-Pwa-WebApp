@@ -64,6 +64,26 @@ const ITEMS_PER_PAGE = 50;
 let loraConfigs = {};
 let HOST = "";
 
+// --- CENTRALIZED CONNECTION SYSTEM ---
+let connectionConfig = {
+    baseIp: "",                    // PC Link (e.g., 192.168.1.50)
+    portWebUI: 7860,              // WebUI Port
+    portLlm: 1234,                 // LLM Port  
+    portWake: 5000,               // Wake Signal Port
+    isConfigured: false           // First-run flag
+};
+
+// Connection state tracking
+let connectionState = {
+    webui: false,                 // WebUI connection status
+    llm: false,                   // LLM connection status
+    wake: false                   // Wake signal status
+};
+
+// System locks for preventing sleep/power saving
+let globalWakeLock = null;
+let globalWifiLock = null;
+
 // QUEUE PERSISTENCE
 let queueState = {
     ongoing: [],

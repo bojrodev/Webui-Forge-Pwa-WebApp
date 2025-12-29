@@ -18,6 +18,9 @@ const Neo = {
         const sel = document.getElementById('qwen_modelSelect');
         if(!sel) return;
         
+        // SORT MODELS ALPHABETICALLY BY NAME
+        models.sort((a, b) => a.model_name.localeCompare(b.model_name, undefined, {sensitivity: 'base'}));
+
         const currentVal = sel.value;
         sel.innerHTML = "";
         
@@ -70,6 +73,9 @@ const Neo = {
         });
 
         if(modulesList.length > 0) {
+            // SORT MODULES ALPHABETICALLY
+            modulesList.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'}));
+
             slots.forEach(sel => {
                 if(!sel) return;
                 modulesList.forEach(name => {
@@ -172,6 +178,20 @@ const Neo = {
             "save_images": true,
             "override_settings": overrides
         };
+
+        // High-Res Fix Injection for Qwen
+        const hrEl = document.getElementById('qwen_hr_enable');
+        if (hrEl && hrEl.checked) {
+            payload.enable_hr = true;
+            payload.hr_scale = parseFloat(document.getElementById('qwen_hr_scale').value) || 1.5;
+            payload.hr_upscaler = document.getElementById('qwen_hr_upscaler').value;
+            payload.hr_second_pass_steps = parseInt(document.getElementById('qwen_hr_steps').value) || 6;
+            payload.denoising_strength = parseFloat(document.getElementById('qwen_hr_denoise').value) || 0.4;
+            // Note: 'hr_cfg' is often supported by Forge/A1111 payload even if not standard in original SD
+            payload.hr_cfg = parseFloat(document.getElementById('qwen_hr_cfg').value) || 1.0;
+            // FIX: Add hr_additional_modules to prevent NoneType error in processing.py
+            payload.hr_additional_modules = ["Use same choices"]; 
+        }
 
         return {
             mode: 'qwen',

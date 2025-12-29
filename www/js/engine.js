@@ -127,6 +127,16 @@ function buildJobFromUI() {
             "scheduler": document.getElementById('xl_scheduler').value,
             "seed": parseInt(document.getElementById('xl_seed').value),
             "save_images": true,
+            // High Res Fix Injection
+            ...(document.getElementById('xl_hr_enable') && document.getElementById('xl_hr_enable').checked ? {
+                "enable_hr": true,
+                "hr_scale": parseFloat(document.getElementById('xl_hr_scale').value),
+                "hr_upscaler": document.getElementById('xl_hr_upscaler').value,
+                "hr_second_pass_steps": parseInt(document.getElementById('xl_hr_steps').value),
+                "denoising_strength": parseFloat(document.getElementById('xl_hr_denoise').value),
+                "hr_cfg": parseFloat(document.getElementById('xl_hr_cfg').value),
+                "hr_additional_modules": ["Use same choices"]
+            } : {}),
             "override_settings": overrides
         };
     } else {
@@ -137,6 +147,25 @@ function buildJobFromUI() {
         if (bits) overrides["forge_unet_storage_dtype"] = bits;
         
         const distCfg = parseFloat(document.getElementById('flux_distilled').value);
+
+        // --- NEW FLUX CACHE (FBC) LOGIC START ---
+        let scriptsPayload = {};
+        const useCache = document.getElementById('flux_cache_enable').checked;
+        
+        if (useCache) {
+            scriptsPayload["First Block Cache / TeaCache"] = {
+                "args": [
+                    true,                                           // Enabled
+                    "First Block Cache",                            // Method
+                    parseFloat(document.getElementById('flux_cache_threshold').value), // Threshold
+                    parseInt(document.getElementById('flux_cache_start').value),       // Uncached start
+                    parseInt(document.getElementById('flux_cache_max').value),         // Max consecutive
+                    document.getElementById('flux_cache_last').checked                 // Skip last step? (Checked = True)
+                ]
+            };
+        }
+        // --- NEW FLUX CACHE (FBC) LOGIC END ---
+
         payload = {
             "prompt": document.getElementById('flux_prompt').value,
             "negative_prompt": "",
@@ -151,6 +180,17 @@ function buildJobFromUI() {
             "scheduler": document.getElementById('flux_scheduler').value,
             "seed": parseInt(document.getElementById('flux_seed').value),
             "save_images": true,
+            "alwayson_scripts": scriptsPayload,
+            // High Res Fix Injection
+            ...(document.getElementById('flux_hr_enable') && document.getElementById('flux_hr_enable').checked ? {
+                "enable_hr": true,
+                "hr_scale": parseFloat(document.getElementById('flux_hr_scale').value),
+                "hr_upscaler": document.getElementById('flux_hr_upscaler').value,
+                "hr_second_pass_steps": parseInt(document.getElementById('flux_hr_steps').value),
+                "denoising_strength": parseFloat(document.getElementById('flux_hr_denoise').value),
+                "hr_cfg": parseFloat(document.getElementById('flux_hr_cfg').value),
+                "hr_additional_modules": ["Use same choices"]
+            } : {}),
             "override_settings": overrides
         };
     }
@@ -258,7 +298,16 @@ window.processQueue = async function() {
     if (queueState.ongoing.length === 0) return alert("Queue empty!");
 
     isQueueRunning = true;
-    totalBatchSteps = queueState.ongoing.reduce((acc, job) => acc + ((job.payload.n_iter || 1) * job.payload.steps), 0);
+
+    // FIX: Calculate total batch steps accurately including High-Res passes
+    totalBatchSteps = queueState.ongoing.reduce((acc, job) => {
+        let perImage = job.payload.steps || 0;
+        if (job.payload.enable_hr) {
+            perImage += (job.payload.hr_second_pass_steps || 0);
+        }
+        return acc + ((job.payload.n_iter || 1) * perImage);
+    }, 0);
+
     currentBatchProgress = 0;
 
     document.getElementById('queueProgressBox').classList.remove('hidden');
@@ -390,7 +439,12 @@ async function runJob(job, isBatch = false) {
         btn.innerText = "PROCESSING...";
         await updateBatchNotification("Starting Generation", true, "Initializing...");
 
-        const jobTotalSteps = (job.payload.n_iter || 1) * job.payload.steps;
+        // --- ACCURATE GLOBAL STEP CALCULATION ---
+        let perImageSteps = job.payload.steps;
+        if (job.payload.enable_hr) {
+            perImageSteps += (job.payload.hr_second_pass_steps || 0);
+        }
+        const jobTotalSteps = (job.payload.n_iter || 1) * perImageSteps;
 
         const progressInterval = setInterval(async () => {
             try {
@@ -398,14 +452,15 @@ async function runJob(job, isBatch = false) {
                     headers: getHeaders()
                 });
                 const data = await res.json();
-                if (data.state && data.state.sampling_steps > 0) {
-                    const currentJobIndex = data.state.job_no || 0;
-                    const currentStepInBatch = data.state.sampling_step;
-                    const jobStep = (currentJobIndex * job.payload.steps) + currentStepInBatch;
-                    btn.innerText = `Step ${jobStep}/${jobTotalSteps}`;
-                    const msg = `Step ${jobStep} / ${jobTotalSteps}`;
+
+                // FIX: Use global progress % to maintain continuous step count across passes
+                if (data.progress > 0) {
+                    const currentStepInBatch = Math.round(data.progress * jobTotalSteps);
+                    const msg = `Step ${currentStepInBatch} / ${jobTotalSteps}`;
+                    btn.innerText = msg;
+                    
                     if (isBatch) {
-                        const actualTotal = currentBatchProgress + jobStep;
+                        const actualTotal = currentBatchProgress + currentStepInBatch;
                         document.getElementById('queueProgressText').innerText = `Step ${actualTotal} / ${totalBatchSteps}`;
                         updateBatchNotification("Batch Running", false, `Step ${actualTotal} / ${totalBatchSteps}`);
                     } else {

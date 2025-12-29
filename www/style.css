@@ -1,7 +1,6 @@
 /* =========================================
    1. FONTS & VARIABLES
    ========================================= */
-/* Keep local font loading to ensure app looks correct offline */
 @font-face {
     font-family: 'Inter';
     font-style: normal;
@@ -21,6 +20,24 @@
     src: url('./fonts/Inter-ExtraBold.woff2') format('woff2');
 }
 
+/* 1. NEW FONT IMPORT: ORBITRON (For Posh Glitch Header) */
+/* Orbitron Local Definition */
+@font-face {
+    font-family: 'Orbitron';
+    font-style: normal;
+    font-weight: 700; /* Bold */
+    /* Ensure the filename matches exactly what is in your folder */
+    src: url('./fonts/Orbitron-Bold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Orbitron';
+    font-style: normal;
+    font-weight: 900; /* Black/ExtraBold */
+    /* Ensure the filename matches exactly what is in your folder */
+    src: url('./fonts/Orbitron-Black.ttf') format('truetype');
+}
+
 :root {
     /* --- DARK MODE (DEFAULT - SDXL) --- */
     --bg-app: #0f0518;            /* Deep dark background */
@@ -29,7 +46,7 @@
     --bg-input-focus: #151515;    
     
     --text-main: #e0e0e0;
-    --text-muted: #888888;
+    --text-muted: #666666; /* Slightly darker for engraving contrast */
     --text-inverse: #000000;
     
     --border-color: #333333;
@@ -45,9 +62,11 @@
     --btn-bg-hover: #3d3d45;
     
     --success: #00e676;
+    --success-glow: rgba(0, 230, 118, 0.3); /* Premium toggle glow */
     --error: #f44336;
     
     --shadow-soft: 0 4px 12px rgba(0,0,0,0.3);
+    --shadow-inset: inset 0 2px 4px rgba(0,0,0,0.5);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
@@ -57,7 +76,7 @@
     --dock-height: 80px;
 }
 
-/* --- FLUX MODE OVERRIDES (Blue/Cyan Theme) --- */
+/* --- FLUX MODE OVERRIDES --- */
 [data-mode="flux"] {
     --bg-app: #050b14;
     --bg-panel: #0f1623;
@@ -71,18 +90,32 @@
     --border-color: #1e293b;
 }
 
+/* --- QWEN (NEO) MODE OVERRIDES (ADDED) --- */
+[data-mode="qwen"] {
+    --bg-app: #12050f;            /* Deep Plum Background */
+    --bg-panel: #1f0f1a;          /* Dark Pink Panel */
+    
+    --accent-primary: #ff007f;    /* Neon Pink */
+    --accent-secondary: #ff4081;  /* Hot Pink */
+    --accent-glow: rgba(255, 0, 127, 0.4);
+    --accent-gradient: linear-gradient(135deg, #ff007f, #ff4081);
+    --accent-primary-rgb: 255, 0, 127;
+    
+    --border-color: #3b1e2e;
+}
+
 /* --- LIGHT MODE OVERRIDES --- */
 [data-theme="light"] {
     --bg-app: #f2f2f7;            /* iOS Light Gray */
     --bg-panel: #ffffff;          /* Pure White Panels */
-    --bg-input: #f0f0f5;          /* Light Grey Inputs */
-    --bg-input-focus: #e5e5ea;
+    --bg-input: #e5e5ea;          /* Darker grey for inputs to hold engraving */
+    --bg-input-focus: #d1d1d6;
 
     --text-main: #1c1c1e;
-    --text-muted: #6e6e73;
+    --text-muted: #8e8e93;
     --text-inverse: #ffffff;
 
-    --border-color: #d1d1d6;
+    --border-color: #c7c7cc;
     --border-active: #8e8e93;
 
     --accent-primary: #ff9500;    /* Slightly darker orange for contrast */
@@ -98,7 +131,7 @@
 }
 
 /* =========================================
-   2. GLOBAL RESET & BASE
+   2. GLOBAL RESET & BASE (RESPONSIVE UPGRADE)
    ========================================= */
 * {
     box-sizing: border-box;
@@ -110,13 +143,14 @@ body {
     color: var(--text-main);
     font-family: var(--font-stack);
     margin: 0;
-    padding: 15px;
+    padding: clamp(10px, 4vw, 20px); /* Fluid padding for responsiveness */
     padding-top: env(safe-area-inset-top);
     padding-bottom: calc(var(--dock-height) + 20px + env(safe-area-inset-bottom)); /* Space for Dock */
     display: flex;
     flex-direction: column;
     gap: 15px;
     min-height: 100vh;
+    overflow-x: hidden; /* Invisible border system: stage 1 */
     overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile web app */
     transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -131,15 +165,16 @@ canvas {
 /* Utilities */
 .hidden { display: none !important; }
 
-/* FIX: Added flex: 1 to ensure container fills vertical space for centering */
+/* INVISIBLE BORDER SYSTEM: Strictly constrains width for tablets and phones */
 .container { 
-    max-width: 600px; 
+    max-width: 650px; 
     margin: 0 auto; 
     width: 100%; 
     display: flex; 
     flex-direction: column; 
     gap: 15px; 
     flex: 1; 
+    overflow-x: hidden; /* Invisible border system: stage 2 */
 }
 
 .row { display: flex; gap: 10px; align-items: center; width: 100%; }
@@ -149,26 +184,73 @@ canvas {
 .c-s { color: var(--accent-secondary); font-weight: bold; }
 
 /* =========================================
-   3. HEADER & TYPOGRAPHY
+   3. HEADER & TYPOGRAPHY (POSH DESIGN UPGRADE)
    ========================================= */
 .header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    /* Respect Notch/Status Bar and add posh spacing */
+    padding-top: clamp(20px, 6vh, 35px); 
+    margin-bottom: 25px;
 }
 
 h2 {
+    font-family: 'Orbitron', sans-serif !important; /* FIXED: Orbitron */
     text-align: center;
     font-weight: 900;
     margin: 0;
-    font-size: 20px;
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: clamp(20px, 6.5vw, 26px); 
+    color: var(--text-main);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 5px;
+    position: relative;
     flex: 1;
+    white-space: nowrap;
+}
+
+/* --- THE CLEAN MODULAR GLITCH EFFECT --- */
+h2::before,
+h2::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+}
+
+/* Glitch layers */
+h2::before {
+    left: 2px;
+    text-shadow: -1.5px 0 var(--error);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+h2::after {
+    left: -2px;
+    text-shadow: -1.5px 0 var(--accent-primary);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 1.5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+    0% { clip: rect(10px, 9999px, 40px, 0); }
+    20% { clip: rect(30px, 9999px, 60px, 0); }
+    40% { clip: rect(10px, 9999px, 30px, 0); }
+    60% { clip: rect(40px, 9999px, 80px, 0); }
+    80% { clip: rect(20px, 9999px, 50px, 0); }
+    100% { clip: rect(40px, 9999px, 60px, 0); }
+}
+
+@keyframes glitch-anim2 {
+    0% { clip: rect(70px, 9999px, 90px, 0); }
+    25% { clip: rect(10px, 9999px, 40px, 0); }
+    50% { clip: rect(50px, 9999px, 70px, 0); }
+    75% { clip: rect(10px, 9999px, 30px, 0); }
+    100% { clip: rect(60px, 9999px, 80px, 0); }
 }
 
 label {
@@ -184,9 +266,9 @@ label {
 }
 
 /* =========================================
-   4. INPUTS & FORMS
+   4. INPUTS & PREMIUM TOGGLES
    ========================================= */
-input:not([type="checkbox"]):not([type="range"]), 
+input:not([type="checkbox"]):not([type="range"]):not([type="radio"]), 
 select, 
 textarea {
     background: var(--bg-input);
@@ -201,18 +283,54 @@ textarea {
     appearance: none; /* Remove default browser styling */
 }
 
+/* Layout Protection: Disable textarea dragging to prevent screen breaking */
+textarea {
+    resize: none !important;
+}
+
 input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--accent-primary);
     background: var(--bg-input-focus);
 }
 
-/* Custom Checkbox */
-input[type="checkbox"] {
-    width: 20px;
+/* --- THE PREMIUM GLOWING TOGGLE (BOJRO-SWITCH) --- */
+.bojro-switch {
+    appearance: none;
+    width: 38px;
     height: 20px;
-    accent-color: var(--accent-primary);
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    position: relative;
     cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-inset);
+    flex-shrink: 0;
+}
+
+.bojro-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 12px;
+    height: 12px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bojro-switch:checked {
+    background: rgba(0, 230, 118, 0.1);
+    border-color: var(--success);
+    box-shadow: 0 0 10px var(--success-glow);
+}
+
+.bojro-switch:checked::after {
+    left: 21px;
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
 }
 
 /* Readonly fields (like logs) */
@@ -246,7 +364,7 @@ input[readonly], textarea[readonly] {
 }
 
 /* =========================================
-   5. BUTTONS
+   5. BUTTONS (THEME-AWARE UPDATED)
    ========================================= */
 /* Base small button */
 .btn-small {
@@ -308,36 +426,136 @@ input[readonly], textarea[readonly] {
     transform: translateY(2px);
 }
 
-/* Primary Generate Button */
-#genBtn {
-    background: var(--accent-gradient);
-    color: #ffffff; /* Always white text on gradient */
-    border: none;
-    padding: 16px;
-    font-size: 16px;
-    font-weight: 900;
-    border-radius: var(--radius-md);
+/* FIX: THEME-AWARE MAIN BUTTON (Applied to Gen & Save) */
+.btn-main, #genBtn, button[onclick="saveConfiguration()"] {
+    background: var(--accent-gradient) !important;
+    color: #ffffff !important; /* Ensure text is white */
+    border: none !important;
+    padding: 16px !important;
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    font-family: 'Orbitron', sans-serif !important;
+    border-radius: var(--radius-md) !important;
     cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 15px var(--accent-glow);
-    transition: transform 0.1s, box-shadow 0.1s;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 15px var(--accent-glow) !important;
+    transition: all 0.2s ease;
     width: 100%;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
-#genBtn:active {
+.btn-main:active, #genBtn:active, button[onclick="saveConfiguration()"]:active {
     transform: translateY(2px);
-    box-shadow: none;
+    box-shadow: 0 2px 5px var(--accent-glow) !important;
 }
 
-#genBtn:disabled {
+.btn-main:disabled, #genBtn:disabled {
     background: var(--bg-panel);
     color: var(--text-muted);
     box-shadow: none;
     cursor: not-allowed;
     border: 1px solid var(--border-color);
     text-shadow: none;
+}
+
+/* --- THEME-AWARE BRICK BUTTON --- */
+.brick-btn {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px; 
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(14px, 5vw, 18px); 
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    white-space: nowrap; 
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.4s ease;
+    margin-bottom: 15px;
+    outline: none;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+
+    /* Responsive Text Stroke */
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-text-stroke: 1.2px var(--text-muted); 
+    
+    text-shadow: 
+        0px 1px 0px rgba(255, 255, 255, 0.05),
+        0px -1px 0px rgba(0, 0, 0, 0.8);
+}
+
+.brick-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--text-muted); 
+    stroke-width: 2px;
+    fill: transparent;         
+    filter: drop-shadow(0px 1px 0px rgba(255,255,255,0.05)) 
+            drop-shadow(0px -1px 0px rgba(0,0,0,0.8));
+    transition: all 0.4s ease;
+}
+
+.brick-btn:active { transform: scale(0.98); }
+
+/* --- STATE: CONNECTING (THEME-AWARE GREEN) --- */
+.brick-btn.connecting {
+    border-color: var(--success);
+    background: rgba(var(--accent-primary-rgb), 0.05);
+    -webkit-text-stroke: 1.2px var(--success);
+    text-shadow: none;
+    filter: drop-shadow(0 0 5px var(--success-glow));
+}
+
+.brick-btn.connecting svg {
+    stroke: var(--success);
+    filter: drop-shadow(0 0 5px var(--success));
+    animation: pulse-icon 1s infinite alternate;
+}
+
+/* --- STATE: INITIALIZED (THEME-AWARE NEON) --- */
+.brick-btn.active {
+    background: var(--bg-input-focus); 
+    border-color: var(--accent-primary); 
+    -webkit-text-stroke: 1.5px var(--accent-primary); 
+    text-shadow: none;
+    
+    filter: drop-shadow(0 0 3px var(--accent-primary)) 
+            drop-shadow(0 0 8px var(--accent-glow));
+            
+    box-shadow: inset 0 0 40px rgba(var(--accent-primary-rgb), 0.15);
+}
+
+.brick-btn.active svg {
+    stroke: var(--accent-primary);
+    stroke-width: 2.5px; 
+    filter: drop-shadow(0 0 5px var(--accent-primary)) 
+            drop-shadow(0 0 15px var(--accent-secondary));
+}
+
+/* Ensure icons/text remain legible in Light Mode */
+[data-theme="light"] .brick-btn {
+    text-shadow: none;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+}
+[data-theme="light"] .brick-btn svg {
+    filter: none;
+}
+
+@keyframes pulse-icon {
+    from { opacity: 0.5; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1.05); }
 }
 
 /* Icon Buttons (Round) */
@@ -369,7 +587,99 @@ input[readonly], textarea[readonly] {
 }
 
 /* =========================================
-   6. CONTAINERS & PANELS
+   6. DOCK & NAVIGATION (RESPONSIVE FIX)
+   ========================================= */
+.dock-wrapper {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+    pointer-events: none;
+}
+
+/* --- NOTIFICATION BADGE (Added Fix) --- */
+.badge {
+    position: absolute;
+    top: -6px;            /* Move up to float over the shoulder */
+    right: -8px;          /* Move right to clear the icon */
+    background: var(--accent-primary);
+    color: #000000;       /* High contrast text */
+    font-size: 10px;      /* Small but legible */
+    font-weight: 800;
+    height: 16px;
+    min-width: 16px;      /* Ensures circles for "1" but pills for "10" */
+    border-radius: 10px;  /* Pill shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;       /* Breathing room for double digits */
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    border: 1px solid var(--bg-panel); /* Subtle cutout effect */
+    pointer-events: none; /* Let clicks pass through to the button */
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.glass-dock {
+    pointer-events: auto;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    gap: 15px;
+}
+
+.dock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 55px;
+    height: 55px;
+    color: var(--text-muted);
+    border-radius: 18px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    min-width: 0; /* Important for flex scaling */
+}
+
+.dock-item i { transition: 0.2s; width: 22px; height: 22px; }
+.dock-item span {
+    font-size: 9px;
+    font-weight: 800;
+    margin-top: 4px;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dock-item.active {
+    background: var(--text-main); /* High contrast active state */
+    color: var(--bg-app);         /* Inverse text color */
+    transform: translateY(-8px) scale(1.1);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* FIX: Shrink Navbar and hide labels on extremely small devices */
+@media screen and (max-width: 380px) {
+    .dock-item span { display: none; }
+    .dock-item { height: 48px; width: 48px; border-radius: 50%; }
+    .glass-dock { padding: 6px 10px; border-radius: 40px; gap: 2px; }
+}
+
+/* =========================================
+   7. CONTAINERS & PANELS
    ========================================= */
 .glass-box {
     background: var(--bg-panel);
@@ -411,7 +721,7 @@ input[readonly], textarea[readonly] {
 }
 
 /* =========================================
-   7. COMPLEX WIDGETS
+   8. COMPLEX WIDGETS
    ========================================= */
 
 /* Connection Indicator */
@@ -493,7 +803,7 @@ input[readonly], textarea[readonly] {
 }
 
 /* =========================================
-   8. QUEUE & GALLERY
+   9. QUEUE & GALLERY
    ========================================= */
 .queue-section { margin-bottom: 20px; }
 
@@ -574,7 +884,7 @@ input[readonly], textarea[readonly] {
 }
 
 /* =========================================
-   9. MODALS
+   10. MODALS
    ========================================= */
 .modal {
     position: fixed;
@@ -632,10 +942,10 @@ input[readonly], textarea[readonly] {
 }
 
 /* =========================================
-   10. LORA BROWSER & FOLDER FILTER STYLES (NEW)
+   11. LORA BROWSER & FOLDER FILTER STYLES
    ========================================= */
 
-/* --- NEW: Horizontal Chip Container --- */
+/* --- Horizontal Chip Container --- */
 .folder-chips-row {
     display: flex;
     gap: 8px;
@@ -650,7 +960,7 @@ input[readonly], textarea[readonly] {
     display: none; /* Hide scrollbar Chrome/Safari */
 }
 
-/* --- NEW: Individual Chip --- */
+/* --- Individual Chip --- */
 .folder-chip {
     background: var(--bg-input);
     border: 1px solid var(--border-color);
@@ -680,7 +990,7 @@ input[readonly], textarea[readonly] {
     box-shadow: 0 2px 8px rgba(var(--accent-primary-rgb), 0.3);
 }
 
-/* --- NEW: Folder Manager List (Vertical) --- */
+/* --- Folder Manager List (Vertical) --- */
 .folder-list-vertical {
     display: flex;
     flex-direction: column;
@@ -738,8 +1048,7 @@ input[readonly], textarea[readonly] {
     transform: scale(1.2);
 }
 
-/* Existing LoRA Styles below... */
-
+/* LoRA Item Styles */
 .lora-item-row {
     background: var(--bg-panel);
     padding: 8px; /* Reduced padding for compact look */
@@ -835,72 +1144,6 @@ input[readonly], textarea[readonly] {
 }
 
 /* =========================================
-   11. DOCK & OTHER UTILS
-   ========================================= */
-.dock-wrapper {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
-    pointer-events: none;
-}
-
-.glass-dock {
-    pointer-events: auto;
-    background: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    border-radius: 30px;
-    padding: 10px 20px;
-    display: flex;
-    gap: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-}
-
-.dock-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 55px;
-    height: 55px;
-    color: var(--text-muted);
-    border-radius: 18px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.dock-item i { transition: 0.2s; }
-.dock-item span {
-    font-size: 9px;
-    font-weight: 800;
-    margin-top: 4px;
-    opacity: 0.7;
-}
-
-.dock-item.active {
-    background: var(--text-main); /* High contrast active state */
-    color: var(--bg-app);         /* Inverse text color */
-    transform: translateY(-8px) scale(1.1);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-.badge {
-    position: absolute;
-    top: -5px; right: -5px;
-    background: var(--accent-primary);
-    color: #000;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 10px;
-    border: 2px solid var(--bg-panel);
-}
-
-/* =========================================
    12. LIGHTBOX / UPLOAD
    ========================================= */
 #fullScreenModal {
@@ -982,7 +1225,6 @@ input[readonly], textarea[readonly] {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-
 /* =========================================
    13. BOJRO POWER BUTTON INTEGRATION (FIXED)
    ========================================= */
@@ -1028,3 +1270,195 @@ input[readonly], textarea[readonly] {
     color: var(--success); /* #00e676 */
     filter: drop-shadow(0 0 4px var(--success));
 }
+
+/* =========================================
+   14. CONNECTION SYSTEM ENHANCEMENTS
+   ========================================= */
+
+/* Connection Button States */
+.connection-btn {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.connection-btn.connecting {
+    background: rgba(255, 152, 0, 0.2);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    animation: pulse 1.5s infinite;
+}
+
+.connection-btn.connected {
+    background: rgba(0, 230, 118, 0.2);
+    border-color: var(--success);
+    color: var(--success);
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+}
+
+.connection-btn.disconnected {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: var(--error);
+    color: var(--error);
+}
+
+/* Enhanced Indicator States */
+.indicator.connecting {
+    background: var(--accent-primary);
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.indicator.connected {
+    background: var(--success);
+    box-shadow: 0 0 12px var(--success);
+}
+
+.indicator.disconnected {
+    background: var(--error);
+    box-shadow: 0 0 8px var(--error);
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* =========================================
+   15. CONFIGURATION & SETTINGS TAB (INDUSTRIAL MATCH)
+   ========================================= */
+
+#view-cfg {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Section Header Matching */
+#view-cfg .grp-header span {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Content Padding consistency */
+#view-cfg .grp-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+}
+
+/* Input matching for Settings */
+#view-cfg input[type="text"],
+#view-cfg input[type="number"],
+#view-cfg input[type="password"] {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    font-family: 'monospace';
+    font-size: 14px;
+    width: 100%;
+}
+
+#view-cfg input:focus {
+    border-color: var(--accent-primary);
+    background: var(--bg-input-focus);
+}
+
+/* FIX: RADIO BUTTON ALIGNMENT */
+#view-cfg .radio-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding: 8px 0;
+}
+
+#view-cfg .radio-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Ensure labels inside radios don't inherit heavy margins */
+#view-cfg .radio-item label {
+    margin: 0 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    cursor: pointer;
+    line-height: 1;
+    color: var(--text-main);
+}
+
+/* Custom styling for the radio circle to look high-end */
+#view-cfg input[type="radio"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    background: var(--bg-input);
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: all 0.2s ease;
+    margin: 0;
+}
+
+#view-cfg input[type="radio"]:checked {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+#view-cfg input[type="radio"]::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: var(--accent-primary);
+}
+
+#view-cfg input[type="radio"]:checked::before {
+    transform: scale(1);
+}
+
+/* Toggle rows for preferences */
+#view-cfg .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.02);
+    padding: 15px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+/* Configuration badges and metadata */
+#view-cfg .cfg-badge {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 10px;
+    margin-top: 20px;
+    opacity: 0.6;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* LLM linking layout */
+.llm-link-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+.llm-link-row select { flex: 2; height: 45px; }
+.llm-link-row button { flex: 1; height: 45px; font-weight: 800; font-size: 11px; }
