@@ -12,14 +12,30 @@ const DEFAULT_PROMPTS = {
 
 window.toggleTheme = function() {
     const root = document.documentElement;
-    if (root.getAttribute('data-theme') === 'light') {
-        root.removeAttribute('data-theme');
-        document.getElementById('themeToggle').innerHTML = '<i data-lucide="sun"></i>';
-    } else {
+    const switchEl = document.getElementById('cfgThemeSwitch');
+    
+    if (switchEl && switchEl.checked) {
         root.setAttribute('data-theme', 'light');
-        document.getElementById('themeToggle').innerHTML = '<i data-lucide="moon"></i>';
+        localStorage.setItem('bojroTheme', 'light');
+    } else {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('bojroTheme', 'dark');
     }
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+window.loadSavedTheme = function() {
+    const saved = localStorage.getItem('bojroTheme');
+    const switchEl = document.getElementById('cfgThemeSwitch');
+    const root = document.documentElement;
+
+    if (saved === 'light') {
+        root.setAttribute('data-theme', 'light');
+        if (switchEl) switchEl.checked = true;
+    } else {
+        root.removeAttribute('data-theme');
+        if (switchEl) switchEl.checked = false;
+    }
 }
 
 window.switchTab = function(view) {
@@ -62,7 +78,7 @@ window.switchTab = function(view) {
         if (typeof loadGallery === 'function') loadGallery();
     }
     if (view === 'ana') items[4].classList.add('active');
-    if (view === 'cfg') items[5].classList.add('active'); // Ensure CFG tab highlights
+    if (view === 'cfg') items[5].classList.add('active'); 
 }
 
 window.setMode = async function(mode) {
@@ -80,7 +96,6 @@ window.setMode = async function(mode) {
     const fluxCont = document.getElementById('mode-flux-container');
     const qwenCont = document.getElementById('mode-qwen-container');
 
-    // Title Reference for Glitch Effect
     const titleEl = document.getElementById('appTitle');
 
     // Reset all states
@@ -97,29 +112,26 @@ window.setMode = async function(mode) {
     if (qwenCont) qwenCont.classList.add('hidden');
 
     // --- MODE SWITCHING LOGIC ---
-    
     if (mode === 'flux') {
-        root.setAttribute('data-mode', 'flux'); // Triggers Blue Theme
+        root.setAttribute('data-mode', 'flux');
         btnFlux.classList.add('active');
         fluxRow.classList.remove('hidden');
         fluxCont.classList.remove('hidden');
         document.getElementById('genBtn').innerText = "QUANTUM GENERATE";
     } else if (mode === 'qwen') {
-        root.setAttribute('data-mode', 'qwen'); // Triggers Pink/Plum Theme
+        root.setAttribute('data-mode', 'qwen');
         if (btnQwen) btnQwen.classList.add('active');
         if (qwenRow) qwenRow.classList.remove('hidden');
         if (qwenCont) qwenCont.classList.remove('hidden');
         document.getElementById('genBtn').innerText = "TURBO GENERATE";
     } else {
-        root.removeAttribute('data-mode'); // Default SDXL Dark/Orange Theme
+        root.removeAttribute('data-mode');
         btnXL.classList.add('active');
         xlRow.classList.remove('hidden');
         xlCont.classList.remove('hidden');
         document.getElementById('genBtn').innerText = "GENERATE";
     }
 
-    // --- UNIFIED TITLE (Prevents Glitch Breakage) ---
-    // The text and data-text must match for the CSS glitch effect to work correctly.
     const unifiedTitle = "BOJRO RESOLVER";
     if (titleEl) {
         titleEl.innerText = unifiedTitle;
@@ -470,6 +482,7 @@ window.initHr = function() {
 // --- GLOBAL UI PERSISTENCE INITIALIZER ---
 
 window.initGlobalUiState = function() {
+    loadSavedTheme(); 
     initGenericSection('grp-models', 'arr-models', 'bojro_vis_models');
     initGenericSection('grp-xl', 'arr-xl', 'bojro_vis_xl');
     initGenericSection('grp-flux', 'arr-flux', 'bojro_vis_flux');
@@ -477,6 +490,13 @@ window.initGlobalUiState = function() {
     initGenericSection('grp-flux-trident', 'arr-flux-trident', 'bojro_vis_flux_trident');
     initGenericSection('grp-qwen-modules', 'arr-qwen-modules', 'bojro_vis_qwen_modules');
     initGenericSection('fbc-settings-content', 'fbc-arrow', 'bojro_vis_fbc');
+    
+    // --- ADDED: CFG PERSISTENCE INIT ---
+    initGenericSection('cfg-appearance', 'arr-cfg-app', 'bojro_vis_cfg_app');
+    initGenericSection('cfg-base-link', 'arr-cfg-base', 'bojro_vis_cfg_base');
+    initGenericSection('cfg-ports', 'arr-cfg-ports', 'bojro_vis_cfg_ports');
+    initGenericSection('cfg-ui', 'arr-cfg-ui', 'bojro_vis_cfg_ui');
+    initGenericSectionClosed('cfg-sys', 'arr-cfg-sys', 'bojro_vis_cfg_sys');
 }
 
 // --- GENERIC SECTION TOGGLER (PERSISTENT) ---

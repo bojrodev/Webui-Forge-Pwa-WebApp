@@ -11,7 +11,9 @@
 
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
-        
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    
     <script src="js/lucide.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -22,9 +24,6 @@
             <div class="glitch-wrapper" style="flex: 1; display: flex; justify-content: center;">
                 <h2 id="appTitle" data-text="BOJRO RESOLVER">BOJRO RESOLVER</h2>
             </div>
-            <button class="btn-icon" id="themeToggle" onclick="toggleTheme()" style="flex-shrink: 0;">
-                <i data-lucide="sun"></i>
-            </button>
         </div>
 
         <div id="view-gen">
@@ -775,6 +774,19 @@
             <div class="col" style="gap: 15px;">
                 
                 <div class="glass-box">
+                    <div class="row" onclick="toggleGeneric('cfg-appearance', 'arr-cfg-app', 'bojro_vis_cfg_app')" style="justify-content:space-between; cursor:pointer; margin-bottom:5px;">
+                        <label style="cursor:pointer;"><i data-lucide="sun-moon" size="12"></i> APPEARANCE</label>
+                        <i id="arr-cfg-app" data-lucide="chevron-down" size="14" style="transition: transform 0.2s;"></i>
+                    </div>
+                    <div id="cfg-appearance" class="col" style="gap: 12px; padding: 10px 0;">
+                        <div class="row" style="justify-content: space-between; align-items: center; padding: 0 5px;">
+                            <label for="cfgThemeSwitch" style="margin: 0; color: var(--text-main); font-size: 13px;">Light Mode</label>
+                            <input type="checkbox" id="cfgThemeSwitch" class="bojro-switch" onchange="toggleTheme()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-box">
                     <div class="row" onclick="toggleGeneric('cfg-base-link', 'arr-cfg-base', 'bojro_vis_cfg_base')" style="justify-content:space-between; cursor:pointer; margin-bottom:5px;">
                         <label style="cursor:pointer;"><i data-lucide="monitor" size="12"></i> PC ENGINE LINK</label>
                         <i id="arr-cfg-base" data-lucide="chevron-down" size="14" style="transition: transform 0.2s;"></i>
@@ -858,13 +870,7 @@
                 
                 <div class="cfg-badge" style="text-align: center; color: var(--text-muted); font-size: 10px; margin-top: 20px; opacity: 0.6; letter-spacing: 1px; text-transform: uppercase;">Resolver Client v1.2 • GPLv3 License</div>
             </div>
-            <script>
-                initGenericSection('cfg-base-link', 'arr-cfg-base', 'bojro_vis_cfg_base');
-                initGenericSection('cfg-ports', 'arr-cfg-ports', 'bojro_vis_cfg_ports');
-                initGenericSection('cfg-ui', 'arr-cfg-ui', 'bojro_vis_cfg_ui');
-                initGenericSectionClosed('cfg-sys', 'arr-cfg-sys', 'bojro_vis_cfg_sys');
-            </script>
-        </div>
+            </div>
     </div>
 
     <div id="editorModal" class="modal hidden" style="z-index: 300;">
