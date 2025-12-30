@@ -115,7 +115,7 @@ To use the "Magic Prompt" feature, it is highly recommended to host a **Bojro Pr
 
 Resolver features a remote power signal to start (or stop) your WebUI directly from the app home screen.
 
-**Requirement:** Requires the `BojroPowerv2portable.exe` helper running on your PC.
+**Requirement:** Requires the `BojroPowerv3portable.exe` helper running on your PC.
 
 1.  **Run Helper:** Execute the helper app on your PC.
 2.  **Configure:** Go to the **CFG Tab** in Resolver and set your **Wake Port** (Default: `5000`).
