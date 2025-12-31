@@ -543,3 +543,46 @@ window.initGenericSection = function(contentId, arrowId, storageKey) {
         arrow.style.transform = 'rotate(0deg)';
     }
 }
+
+
+
+/* =========================================
+   FORCED THEME OVERRIDE SYSTEM
+   ========================================= */
+
+// 1. Listen for clicks on the Comfy Dock Button
+document.addEventListener('click', function(e) {
+    // Check if clicked element is the Comfy button or inside it
+    const btn = e.target.closest('#dock-comfy');
+    
+    if (btn) {
+        console.log("Comfy Button Clicked -> FORCING GREEN THEME");
+        document.body.setAttribute('data-mode', 'comfy');
+    }
+});
+
+// 2. Listen for clicks on OTHER Dock Buttons to revert
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.dock-item');
+    if (btn && btn.id !== 'dock-comfy') {
+        console.log("Other Tab Clicked -> Reverting Theme");
+        
+        // Revert to the active model's theme
+        if (typeof currentMode !== 'undefined') {
+            if (currentMode === 'flux') document.body.setAttribute('data-mode', 'flux');
+            else if (currentMode === 'qwen') document.body.setAttribute('data-mode', 'qwen');
+            else document.body.removeAttribute('data-mode'); // SDXL
+        }
+    }
+});
+
+// 3. Check immediately on load
+setInterval(() => {
+    const comfyView = document.getElementById('view-comfy');
+    if (comfyView && !comfyView.classList.contains('hidden')) {
+        if (document.body.getAttribute('data-mode') !== 'comfy') {
+            console.log("Detected Comfy View -> Auto-Fixing Theme");
+            document.body.setAttribute('data-mode', 'comfy');
+        }
+    }
+}, 500); // Checks every half second to ensure theme stays correct
