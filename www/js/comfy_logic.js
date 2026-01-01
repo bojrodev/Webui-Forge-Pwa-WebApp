@@ -14,6 +14,8 @@ let comfyRunBuffer = [];        // Stores all images from the current run
 let isComfySelectionMode = false; // Tracks if we are selecting images
 let selectedComfyImages = new Set(); // Stores the URLs of selected images
 
+let isComfyGenerating = false;
+
 // --- 1. CONNECTION & SETUP ---
 
 function toggleComfyConfig() {
@@ -84,7 +86,9 @@ function updateComfyStatus(status) {
         // Connected: Purple Neon Glow
         btn.classList.add('active');
         btn.innerHTML = `<i data-lucide="zap"></i> CONNECTED`;
-        if(comfyLoadedWorkflow) document.getElementById('comfyQueueBtn').disabled = false;
+        if(comfyLoadedWorkflow && !isComfyGenerating) {
+            document.getElementById('comfyQueueBtn').disabled = false;
+        }
     } else if (status === 'connecting') {
         // Connecting: Green Pulse
         btn.classList.add('connecting');
@@ -454,6 +458,8 @@ async function queueComfyPrompt() {
         return;
     }
 
+    isComfyGenerating = true;
+
     // 1. Clear previous run buffer & selection
     comfyRunBuffer = []; 
     if(isComfySelectionMode) toggleComfySelectionMode(); // Exit selection mode if active
@@ -489,6 +495,7 @@ async function queueComfyPrompt() {
         if(window.lucide) lucide.createIcons();
     } catch (e) {
         alert("Failed to queue: " + e);
+        isComfyGenerating = false;
         // Reset button on error
         btn.disabled = false;
         btn.innerHTML = `<i data-lucide="play"></i> GENERATE`;
@@ -498,6 +505,7 @@ async function queueComfyPrompt() {
 async function interruptComfy() {
     try {
         await fetch(`http://${comfyHost}/interrupt`, { method: 'POST' });
+        isComfyGenerating = false;
         document.getElementById('comfyProgressText').innerText = "INTERRUPTED";
         document.getElementById('comfyQueueBtn').disabled = false;
         document.getElementById('comfyQueueBtn').innerText = "GENERATE";
@@ -572,6 +580,7 @@ function handleComfyMessage(event) {
         // 4. EXECUTION SUCCESS: The WHOLE workflow is done 
         // This corresponds to the protocol where 'execution_success' marks the end of the prompt_id lifecycle.
         if (msg.type === 'execution_success') {
+            isComfyGenerating = false;
             const bar = document.getElementById('comfyProgressBar');
             const txt = document.getElementById('comfyProgressText');
             const btn = document.getElementById('comfyQueueBtn');
