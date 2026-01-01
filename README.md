@@ -1,15 +1,10 @@
-# Resolver: Native Android Client for WebUI Forge & ComfyUi (Flux, SDXL & Qwen)
+# Resolver: Native Android Client for WebUI Forge & ComfyUI
 
-![Version](https://img.shields.io/badge/Version-1.3-purple.svg)
 ![Platform](https://img.shields.io/badge/Platform-Android%2010+-green.svg)
 ![Backend](https://img.shields.io/badge/Backend-Forge%20Neo-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-red.svg)
 
-**Resolver** is a high-performance, native Android interface for [Stable Diffusion WebUI Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo).
-
-**New in v1.3:** Resolver now features a dedicated **ComfyUI Engine** for workflow execution, centralized **Configuration (CFG)** for seamless Local/External switching, a remote "Kill Switch", **Flux First Block Cache (FBC)** integration, and native **Hi-Res Fix** support.
-
-Unlike standard browser wrappers, Resolver is built with a **Hybrid Architecture** (Capacitor 6.0 + Vanilla JS) and utilizes **Native Android Foreground Services** to ensure your generation queues never die in the background.
+**Resolver** is a high-performance, native Android interface for AI image generation. It is built using a **Hybrid Architecture** (Capacitor 6.0 + Vanilla JS) and utilizes **Native Android Foreground Services** to ensure generation queues remain active in the background or while the screen is off.
 
 ---
 
@@ -66,108 +61,84 @@ Unlike standard browser wrappers, Resolver is built with a **Hybrid Architecture
 
 ## ⚡ Key Features
 
-### ⚡ v1.3 Connectivity & Power
-* **Smart Connection Mode:** Toggle instantly between **Local Mode** (Auto-appends ports to local IPs) and **External Mode** (Enforces HTTPS for Ngrok/Cloud tunnels, ignoring ports).
-* **Custom Service Ports:** Define independent ports for your WebUI (Default: `7860`), LLM Server (`1234`), ComfyUI (`8188`), and Power Service (`5000`) inside the CFG tab.
-* **Remote Wake & Kill:** Use the "Bojro Dev Power" controls to send Wake-on-LAN signals or a **KILL!** signal to immediately halt the backend server from your phone.
+### Forge WebUI Core
+* **Primary Integration:** Resolver is natively optimized for [WebUI Forge Neo (Haoming02)](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo) and the original [lllyasviel Forge WebUI](https://github.com/lllyasviel/stable-diffusion-webui-forge).
+* **Native API Communication:** Utilizes direct API endpoints for rapid state synchronization and command execution.
+* **Smart Connection Mode:** Toggle between **Local Mode** (automatic port appending) and **External Mode** (enforced HTTPS for Ngrok/Cloudflare).
+* **Remote Power Control:** Integrated "Bojro Dev Power" for Wake-on-LAN and a remote **KILL!** signal to stop the backend server instantly.
 
-### ⚡ ComfyUI Engine
-* **Workflow Orchestration:** Load standard API-compatible ComfyUI `.json` workflows directly into the app.
-* **Dynamic UI Generation:** The engine automatically parses the workflow graph to build native sliders, dropdowns, and text inputs for samplers, checkpoints, and prompts.
-* **Live WebSocket Feedback:** Features real-time step monitoring and binary image previews delivered via persistent socket connections.
-* **Integrated Gallery:** Automatically archives final ComfyUI outputs into the main Resolver history for cross-engine metadata analysis.
+### ComfyUI Engine
+* **Workflow Orchestration:** Execute API-compatible ComfyUI `.json` workflows directly within the app.
+* **Dynamic UI Generation:** Automatically parses workflow graphs to generate native sliders, dropdowns, and text inputs for samplers, checkpoints, and prompts.
+* **Live WebSocket Feedback:** Real-time step monitoring and binary image previews via persistent socket connections.
+* **Unified Gallery:** Automatically archives ComfyUI outputs into the main history for cross-engine metadata analysis.
 
-### ⚡ Flux First Block Cache (FBC)
-* **Native Integration:** First mobile client to support the **Forge Block Cache** extension.
-* **Speed Boost:** Skip redundant diffusion steps (`bnb-nf4`, `fp8`) to significantly reduce generation time on Flux models.
-* **Tunable:** Adjust threshold and skip steps directly from the Flux UI.
+### Flux First Block Cache (FBC)(Only lllyasviel Forge WebUI)
+* **Performance Boost:** Native support for the Forge Block Cache extension to reduce generation times.
+* **Optimization:** Skips redundant diffusion steps for `bnb-nf4` and `fp8` Flux models.
+* **Direct Control:** Threshold and skip step adjustments accessible directly via the Flux UI.
 
-### ⚡ Native Hi-Res Fix
+### Native Hi-Res Fix
 * **Upscaling Engine:** Full support for `Hires. fix` across SDXL, Flux, and Qwen modes.
-* **Controls:** Select upscalers (ESRGAN, etc.), set denoising strength, and upscale factors within the app.
+* **Customization:** Adjustable upscalers (ESRGAN, etc.), denoising strength, and upscale factors.
 
-### ⚡ True Background Generation
-* **Native Foreground Service:** Uses a Java-based service and Wake Locks to keep WebSocket connections alive during long Flux GGUF workflows or massive batch queues, even when the screen is off.
-* **Queue Persistence:** Robust state management system for Ongoing, Next, and Completed jobs.
+### True Background Generation
+* **Foreground Service:** Java-based service with Wake Locks to maintain active WebSocket connections during long Flux GGUF tasks or batch queues.
+* **Persistence:** Robust management for Ongoing, Next, and Completed jobs.
 
-### ⚡ Advanced Generation Engines
-* **Flux GGUF Optimized:** Includes dedicated selectors for VAE, CLIP, and T5-XXL models, with support for specific quantization bits.
-* **Qwen / Z-Image Turbo:** Specialized "Turbo Generate" mode for Qwen models with dense narrative support.
-* **SDXL Powerhouse:** Full control over sampling, scheduling, and aspect ratio locking.
-* **Mobile Inpainting:** A touch-optimized canvas editor with mask blurring, soft inpainting, and denoising controls.
+### Advanced Generation Engines
+* **Flux GGUF:** Support for VAE, CLIP, and T5-XXL selectors with specific quantization bit settings.
+* **Qwen / Z-Image Turbo:** Specialized mode for Qwen models with dense narrative support.
+* **SDXL Powerhouse:** Comprehensive control over sampling, scheduling, and aspect ratio locking.
+* **Mobile Inpainting:** Touch-optimized canvas editor with mask blurring and denoising controls.
 
-### ⚡ Magic Prompt (Local LLM)
-* **Smart Expansion:** Integrates with local LLM servers (LM Studio, Ollama) to translate simple ideas into professional prompts.
-* **Dynamic Mode Switching:** Automatically applies specialized system prompts for SDXL, Flux, and Qwen narratives.
+### Magic Prompt (Local LLM)
+* **Smart Expansion:** Connects to local LLM servers (LM Studio, Ollama) to translate simple ideas into complex prompts.
+* **Mode Awareness:** Automatically switches system instructions based on the active engine (SDXL, Flux, or Qwen).
 
 ---
 
 ## ⚡ Backend Setup (Mandatory)
 
-To enable communication between the Android app and your PC, you must add the following launch arguments to your backend services:
-
 **WebUI Forge:**
-Edit your `webui-user.bat` and set the following:
+In `webui-user.bat`, set:
 `set COMMANDLINE_ARGS=--listen --api --cors-allow-origins *`
 
 **ComfyUI:**
-Append these flags to your launch command (after the python call):
+Append these flags to your launch command:
 `--listen --enable-cors-header *`
 
 ---
 
 ## ⚡ Magic Prompt (LLM) Setup
 
-To use the "Magic Prompt" feature, it is highly recommended to host a **Bojro PromptMaster** model on your PC.
-
-1.  **Download a Model:** Get the GGUF version of your choice from Hugging Face:
-    * 👉 **[PromptMaster v2 (Uncensored)](https://huggingface.co/bojrodev/BojroPromptMaster_uncensored_v2-8B)** (Recommended)
-    * 👉 **[PromptMaster v1 (Uncensored)](https://huggingface.co/bojrodev/BojroPromptMaster-v1-8B)**
-2.  **Run Server:** Load the model into **LM Studio** or **Ollama** and ensure it is serving on your local network (e.g., `http://192.168.1.10:1234`).
-3.  **Connect App:**
-    * In Resolver, tap the **Bot Icon** to open the Magic Prompt modal.
-    * Enter your LLM Server URL (or configure the Port in the **CFG Tab**) and tap **Connect**.
-    * The app will automatically use specialized system instructions for each image generation mode.
+Host a **Bojro PromptMaster** model on your PC:
+1.  **Download:** [PromptMaster v2 (Uncensored)](https://huggingface.co/bojrodev/BojroPromptMaster_uncensored_v2-8B) or [v1](https://huggingface.co/bojrodev/BojroPromptMaster-v1-8B).
+2.  **Server:** Load into **LM Studio** or **Ollama** on your local network.
+3.  **Connect:** Open the Bot modal in Resolver, enter the server URL, and save.
 
 ---
 
-## ⚡ Remote PC Wake (The Power Button)
+## ⚡ Remote PC Wake
 
-Resolver features a remote power signal to start (or stop) your WebUI directly from the app home screen.
-
-**Requirement:** Requires the `BojroPowerv3portable.exe` helper running on your PC.
-
-1.  **Run Helper:** Execute the helper app on your PC.
-2.  **Configure:** Go to the **CFG Tab** in Resolver and set your **Wake Port** (Default: `5000`).
-3.  **Wake:** Tap the Power Button (ტ) to send a start signal.
-4.  **Kill:** Tap the **KILL!** button to remotely stop the services.
-
----
-
-## ⚡ Workflow & LoRA Management
-* **Neo Bridge:** Browse LoRAs by folder with smart thumbnail caching.
-* **Config Injection:** Set preferred weights and trigger words that auto-inject into your prompts.
-* **Metadata Analysis:** Built-in PNG Info reader with one-tap "Copy to Mode" functionality to restore parameters from history.
+Requires `BojroPowerv_x_portable.exe` on the host PC.
+1.  **Run Helper:** Execute the utility on your PC.
+2.  **Configure:** Set the **Wake Port** (Default: `5000`) in the **CFG Tab**.
+3.  **Operation:** Use the Power Button (ტ) to start or the **KILL!** button to halt services.
 
 ---
 
 ## ⚡ Installation & Building
 
 ### Installation
-1.  Install **WebUI Forge (Neo)** and/or **ComfyUI** on your PC.
-2.  Download the latest `.apk` from the **Releases Page**.
-3.  Ensure your phone and PC are on the same Wi-Fi.
-4.  Navigate to the **CFG Tab**, enter your PC's IP, and tap **Save Configuration**.
+1.  Install **WebUI Forge** and/or **ComfyUI** on your PC.
+2.  Download the latest `.apk` from the **Releases**.
+3.  Ensure phone and PC are on the same Wi-Fi.
+4.  Set PC IP in the **CFG Tab** and save.
 
 ### Building from Source
 ```bash
-# Clone the repository
 git clone [https://github.com/bojrodev/Resolver-WebUI-Forge-Client.git](https://github.com/bojrodev/Resolver-WebUI-Forge-Client.git)
-
-# Install dependencies
 npm install
-
-# Sync and open Android project
 npx cap sync
 npx cap open android
-# Open the Android Project in Android Studio
