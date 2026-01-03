@@ -29,7 +29,7 @@ async function checkForAppUpdate() {
         const remoteData = await response.json();
         
         // --- CRITICAL CHANGE: Set this to your version ---
-        const currentVersion = '1.5'; 
+        const currentVersion = '1.6'; 
 
         if (isNewer(currentVersion, remoteData.version)) {
             const doUpdate = confirm(
