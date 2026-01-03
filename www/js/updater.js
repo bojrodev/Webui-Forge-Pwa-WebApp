@@ -5,59 +5,101 @@ if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Cap
     window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady();
 }
 
-async function checkForAppUpdate() {
+/**
+ * Checks for updates and triggers the Custom UI.
+ * @param {boolean} silent - If true, suppresses "Checking..." and "No updates" toasts.
+ */
+async function checkForAppUpdate(silent = false) {
     const Updater = window.Capacitor && window.Capacitor.Plugins ? window.Capacitor.Plugins.CapacitorUpdater : null;
 
     if (!Updater) {
-        console.warn("CapacitorUpdater plugin missing (Web Mode?)");
+        if (!silent) console.warn("Updater plugin missing (Web Mode?)");
         return;
     }
 
     try {
-        if (typeof Toast !== 'undefined') Toast.show({text: 'Checking for updates...', duration: 'short'});
+        if (!silent && typeof Toast !== 'undefined') {
+            Toast.show({text: 'Checking for updates...', duration: 'short'});
+        }
 
+        // --- CONFIGURATION ---
         // Pointing to 'dev' branch
         const UPDATE_URL = 'https://raw.githubusercontent.com/bojrodev/Resolver-Stable-Diffusion-Client-for-android/dev/version.json';
-        
-        // Add time parameter to bypass cache
+        const currentVersion = '1.5'; // <--- CHANGE THIS BEFORE RELEASING NEW VERSION
+        // ---------------------
+
+        // Fetch version info (with timestamp to bust cache)
         const response = await fetch(UPDATE_URL + '?t=' + new Date().getTime());
-        
-        if (!response.ok) {
-            throw new Error(`Fetch failed: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
         
         const remoteData = await response.json();
-        
-        // --- CRITICAL CHANGE: Set this to your version ---
-        const currentVersion = '1.6'; 
 
         if (isNewer(currentVersion, remoteData.version)) {
-            const doUpdate = confirm(
-                `Update v${remoteData.version} Available!\n\n` +
-                `Notes: ${remoteData.note}\n\n` +
-                `Download and Restart?`
-            );
-
-            if (doUpdate) {
-                if (typeof Toast !== 'undefined') {
-                    Toast.show({text: 'Downloading update... App will restart.', duration: 'long'});
-                }
-                
-                const update = await Updater.download({
-                    url: remoteData.url,
-                    version: remoteData.version
-                });
-                
-                await Updater.set(update);
-            }
+            // Found update! Show the Custom Modal
+            showUpdateModal(remoteData, Updater);
         } else {
-             if (typeof Toast !== 'undefined') Toast.show({text: 'You are up to date (v' + currentVersion + ')', duration: 'short'});
+             if (!silent && typeof Toast !== 'undefined') {
+                 Toast.show({text: 'You are up to date (v' + currentVersion + ')', duration: 'short'});
+             }
         }
 
     } catch (error) {
         console.error(error);
-        if (typeof Toast !== 'undefined') Toast.show({text: 'Update check failed', duration: 'short'});
+        if (!silent && typeof Toast !== 'undefined') {
+            Toast.show({text: 'Update check failed', duration: 'short'});
+        }
     }
+}
+
+/**
+ * Displays the custom HTML modal instead of native confirm()
+ */
+function showUpdateModal(data, UpdaterPlugin) {
+    const modal = document.getElementById('updateModal');
+    const badge = document.getElementById('updateVersionBadge');
+    const notes = document.getElementById('updateNotes');
+    const btn = document.getElementById('btnDoUpdate');
+
+    if (!modal || !btn) {
+        console.error("Update Modal DOM elements missing!");
+        return;
+    }
+
+    // Populate Data
+    if (badge) badge.innerText = `v${data.version}`;
+    if (notes) notes.innerText = data.note || "New features and improvements.";
+
+    // Set up the Install Button
+    btn.onclick = async () => {
+        // 1. Change button state to "Downloading..."
+        btn.disabled = true;
+        btn.innerHTML = `<div class="spinner" style="width:16px;height:16px;border-width:2px;margin-right:8px;"></div> DOWNLOADING...`;
+        
+        try {
+            // 2. Start Download
+            const update = await UpdaterPlugin.download({
+                url: data.url,
+                version: data.version
+            });
+            
+            // 3. Apply & Restart
+            btn.innerHTML = `RESTARTING...`;
+            await UpdaterPlugin.set(update);
+            
+        } catch (e) {
+            console.error(e);
+            alert("Download Failed: " + e.message);
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="download-cloud"></i> RETRY`;
+            lucide.createIcons(); // Re-render icon
+        }
+    };
+
+    // Show the modal
+    modal.classList.remove('hidden');
+    
+    // Refresh icons inside the modal (since it was hidden)
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function isNewer(current, remote) {
