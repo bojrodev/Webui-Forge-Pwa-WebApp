@@ -192,9 +192,21 @@ window.onload = function() {
             setTimeout(() => switchTab(hash), 150);
         }
 
+        // =========================================================================
+        // 16. SILENT AUTO-UPDATE CHECK
+        // =========================================================================
+        setTimeout(() => {
+            if (typeof checkForAppUpdate === 'function') {
+                console.log("Boot: Running silent update check...");
+                checkForAppUpdate(true); // <--- TRUE means "Silent Mode"
+            }
+        }, 3000); // Waits 3 seconds after boot
+
         console.log("App Initialized Successfully");
     } catch (e) {
         console.error("Initialization Error:", e);
         alert("App Init Failed: " + e.message);
     }
 }
+
+    
