@@ -21,6 +21,12 @@ function loadConnectionConfig() {
     if (document.getElementById('extUrlComfy')) document.getElementById('extUrlComfy').value = connectionConfig.extComfy || '';
     if (document.getElementById('extUrlLlm')) document.getElementById('extUrlLlm').value = connectionConfig.extLlm || '';
     if (document.getElementById('extUrlWake')) document.getElementById('extUrlWake').value = connectionConfig.extWake || '';
+    if (document.getElementById('cfgCloudflareSwitch')) {
+        document.getElementById('cfgCloudflareSwitch').checked = connectionConfig.isCloudflare || false;
+        toggleCloudflareUI();
+    }
+    if (document.getElementById('cfgCfClientId')) document.getElementById('cfgCfClientId').value = connectionConfig.cfClientId || '';
+    if (document.getElementById('cfgCfClientSecret')) document.getElementById('cfgCfClientSecret').value = connectionConfig.cfClientSecret || '';
     
     // 3. Update Toggle Switch
     const elMode = document.getElementById('cfgModeSwitch');
@@ -194,6 +200,12 @@ window.saveConfiguration = function() {
     const extLlm = document.getElementById('extUrlLlm').value.trim().replace(/\/$/, "");
     const extWake = document.getElementById('extUrlWake').value.trim().replace(/\/$/, "");
 
+    // --- MISSING PART ADDED HERE ---
+    const isCloudflare = document.getElementById('cfgCloudflareSwitch').checked;
+    const cfClientId = document.getElementById('cfgCfClientId').value.trim();
+    const cfClientSecret = document.getElementById('cfgCfClientSecret').value.trim();
+    // -------------------------------
+
     // Save to Config Object
     connectionConfig.baseIp = baseIp;
     connectionConfig.isRemote = isRemote;
@@ -207,6 +219,11 @@ window.saveConfiguration = function() {
     connectionConfig.extComfy = extComfy;
     connectionConfig.extLlm = extLlm;
     connectionConfig.extWake = extWake;
+    
+    // Now these variables exist and can be saved safely:
+    connectionConfig.isCloudflare = isCloudflare;
+    connectionConfig.cfClientId = cfClientId;
+    connectionConfig.cfClientSecret = cfClientSecret;
 
     connectionConfig.isConfigured = true;
     
@@ -486,4 +503,13 @@ function applyModelVisibility(config) {
     if (btnQwen) config.qwen ? btnQwen.classList.remove('hidden') : btnQwen.classList.add('hidden');
     
     if (dockComfy) config.comfy ? dockComfy.classList.remove('hidden') : dockComfy.classList.add('hidden');
+}
+
+window.toggleCloudflareUI = function() {
+    const isOn = document.getElementById('cfgCloudflareSwitch').checked;
+    const cont = document.getElementById('container-cloudflare');
+    if (cont) {
+        if(isOn) cont.classList.remove('hidden');
+        else cont.classList.add('hidden');
+    }
 }

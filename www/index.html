@@ -931,6 +931,28 @@
                             </div>
                         </div>
                     </div>
+                    <div class="glass-box" style="margin-top: 10px; border: 1px solid #f48fb1;">
+                        <div class="row" style="justify-content:space-between; align-items:center;">
+                            <label style="color:#f48fb1; font-weight:900;"><i data-lucide="shield-check" size="14"></i> CLOUDFLARE ZERO TRUST</label>
+                            <input type="checkbox" id="cfgCloudflareSwitch" class="bojro-switch" onchange="toggleCloudflareUI()">
+                        </div>
+                        
+                        <div id="container-cloudflare" class="hidden" style="margin-top:10px; border-top:1px solid rgba(244, 143, 177, 0.3); padding-top:10px;">
+                            <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 10px;">
+                                Bypasses CORS and injects Service Tokens for protected backends.
+                            </p>
+                            <div class="col" style="gap: 10px;">
+                                <div class="col">
+                                    <label>CF-Access-Client-Id</label>
+                                    <input type="text" id="cfgCfClientId" placeholder="Paste Client ID..." style="font-family: monospace;">
+                                </div>
+                                <div class="col">
+                                    <label>CF-Access-Client-Secret</label>
+                                    <input type="password" id="cfgCfClientSecret" placeholder="Paste Secret..." style="font-family: monospace;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="glass-box">

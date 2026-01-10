@@ -1,7 +1,109 @@
 // -----------------------------------------------------------
-// NETWORK & API COMMUNICATION
+// NATIVE NETWORK PROXY (CORS BYPASS)
 // -----------------------------------------------------------
 
+// 1. Capture the original browser fetch immediately
+window.originalFetch = window.originalFetch || window.fetch;
+
+// 2. Helper for Native Capacitor Requests
+async function performNativeRequest(url, options = {}) {
+    // Fallback if plugin is missing (dev environment)
+    if (!window.Capacitor || !window.Capacitor.Plugins.CapacitorHttp) {
+        console.warn("[NativeProxy] CapacitorHttp missing, falling back.");
+        return window.originalFetch(url, options);
+    }
+
+    const method = options.method || 'GET';
+    const headers = options.headers || {};
+    
+    // INJECT CLOUDFLARE CREDENTIALS
+    if (connectionConfig.isCloudflare) {
+        if (connectionConfig.cfClientId) headers['CF-Access-Client-Id'] = connectionConfig.cfClientId;
+        if (connectionConfig.cfClientSecret) headers['CF-Access-Client-Secret'] = connectionConfig.cfClientSecret;
+    }
+
+    // Ensure JSON content type for POST/PUT if missing
+    if (method !== 'GET' && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    let data = options.body;
+    
+    // CapacitorHttp Data Normalization
+    try {
+        if (data && typeof data === 'string') {
+            if (headers['Content-Type'] && headers['Content-Type'].includes('json')) {
+                data = JSON.parse(data);
+            }
+        }
+    } catch (e) {}
+
+    try {
+        const response = await window.Capacitor.Plugins.CapacitorHttp.request({
+            method: method,
+            url: url,
+            headers: headers,
+            data: data
+        });
+
+        // Return a Fetch-Compatible Response Object
+        return {
+            ok: response.status >= 200 && response.status < 300,
+            status: response.status,
+            statusText: response.status >= 200 && response.status < 300 ? "OK" : "Error",
+            headers: new Headers(response.headers),
+            json: async () => response.data,
+            text: async () => typeof response.data === 'string' ? response.data : JSON.stringify(response.data),
+            blob: async () => new Blob([JSON.stringify(response.data)])
+        };
+
+    } catch (error) {
+        console.error("[NativeProxy] Request Failed:", error);
+        throw error;
+    }
+}
+
+// 3. Global Override Logic
+window.fetch = async function(input, init) {
+    // A. VALIDATION CHECK: Only run if Remote + Cloudflare are ON
+    if (typeof connectionConfig === 'undefined' || !connectionConfig.isRemote || !connectionConfig.isCloudflare) {
+        return window.originalFetch(input, init);
+    }
+
+    let url;
+    let options = init || {};
+
+    // Normalize input
+    if (typeof input === 'string') {
+        url = input;
+    } else if (input instanceof Request) {
+        url = input.url;
+        options = { ...options, method: input.method, headers: input.headers };
+    } else {
+        url = input.toString();
+    }
+
+    // B. TARGET FILTERING: Only proxy configured external URLs
+    const targetHosts = [
+        connectionConfig.extForge, 
+        connectionConfig.extComfy, 
+        connectionConfig.extLlm, 
+        connectionConfig.extWake
+    ].filter(h => h && h.length > 0);
+
+    const isTarget = targetHosts.some(host => url.startsWith(host));
+
+    if (isTarget) {
+        return performNativeRequest(url, options);
+    }
+
+    // Fallback for non-target URLs
+    return window.originalFetch(input, init);
+};
+
+// -----------------------------------------------------------
+// NETWORK & API COMMUNICATION
+// -----------------------------------------------------------
 function loadHostIp() {
     // Load from new centralized config first
     if (typeof loadConnectionConfig === 'function') {
