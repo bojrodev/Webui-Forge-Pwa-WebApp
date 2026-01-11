@@ -1,7 +1,107 @@
 // -----------------------------------------------------------
-// NETWORK & API COMMUNICATION
+// NATIVE NETWORK PROXY (CORS BYPASS)
 // -----------------------------------------------------------
 
+// 1. Capture the original browser fetch immediately
+window.originalFetch = window.originalFetch || window.fetch;
+
+// 2. Helper for Native Capacitor Requests
+async function performNativeRequest(url, options = {}) {
+    // Fallback if plugin is missing (dev environment)
+    if (!window.Capacitor || !window.Capacitor.Plugins.CapacitorHttp) {
+        console.warn("[NativeProxy] CapacitorHttp missing, falling back.");
+        return window.originalFetch(url, options);
+    }
+
+    const method = options.method || 'GET';
+    const headers = options.headers || {};
+    
+    // INJECT CLOUDFLARE CREDENTIALS
+    if (connectionConfig.isCloudflare) {
+        if (connectionConfig.cfClientId) headers['CF-Access-Client-Id'] = connectionConfig.cfClientId;
+        if (connectionConfig.cfClientSecret) headers['CF-Access-Client-Secret'] = connectionConfig.cfClientSecret;
+    }
+
+    // Ensure JSON content type for POST/PUT if missing
+    if (method !== 'GET' && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    let data = options.body;
+    
+    // CapacitorHttp Data Normalization
+    try {
+        if (data && typeof data === 'string') {
+            if (headers['Content-Type'] && headers['Content-Type'].includes('json')) {
+                data = JSON.parse(data);
+            }
+        }
+    } catch (e) {}
+
+    try {
+        const response = await window.Capacitor.Plugins.CapacitorHttp.request({
+            method: method,
+            url: url,
+            headers: headers,
+            data: data
+        });
+
+        // Return a Fetch-Compatible Response Object
+        return {
+            ok: response.status >= 200 && response.status < 300,
+            status: response.status,
+            statusText: response.status >= 200 && response.status < 300 ? "OK" : "Error",
+            headers: new Headers(response.headers),
+            json: async () => response.data,
+            text: async () => typeof response.data === 'string' ? response.data : JSON.stringify(response.data),
+            blob: async () => new Blob([JSON.stringify(response.data)])
+        };
+
+    } catch (error) {
+        console.error("[NativeProxy] Request Failed:", error);
+        throw error;
+    }
+}
+
+// 3. Global Override Logic
+window.fetch = async function(input, init) {
+    // A. VALIDATION CHECK: Only run if Remote + Cloudflare are ON
+    if (typeof connectionConfig === 'undefined' || !connectionConfig.isRemote) {
+        return window.originalFetch(input, init);
+    }
+
+    let url;
+    let options = init || {};
+
+    // Normalize input
+    if (typeof input === 'string') {
+        url = input;
+    } else if (input instanceof Request) {
+        url = input.url;
+        options = { ...options, method: input.method, headers: input.headers };
+    } else {
+        url = input.toString();
+    }
+
+    // B. TARGET FILTERING: Only proxy configured external URLs
+    const targetHosts = [
+        connectionConfig.extForge, 
+        connectionConfig.extWake
+    ].filter(h => h && h.length > 0);
+
+    const isTarget = targetHosts.some(host => url.startsWith(host));
+
+    if (isTarget) {
+        return performNativeRequest(url, options);
+    }
+
+    // Fallback for non-target URLs
+    return window.originalFetch(input, init);
+};
+
+// -----------------------------------------------------------
+// NETWORK & API COMMUNICATION
+// -----------------------------------------------------------
 function loadHostIp() {
     // Load from new centralized config first
     if (typeof loadConnectionConfig === 'function') {
@@ -25,28 +125,38 @@ function loadHostIp() {
 }
 
 window.connect = async function(silent = false) {
-    // Use centralized configuration if available
-    if (connectionConfig.baseIp) {
-        HOST = buildWebUIUrl();
+    // 1. FORCE STATE SYNC (Safety Check)
+    // Directly check the switch to ensure we know the true mode, even if cfg.js missed it
+    const modeSwitch = document.getElementById('cfgModeSwitch');
+    if (modeSwitch && typeof connectionConfig !== 'undefined') {
+        connectionConfig.isRemote = modeSwitch.checked;
+    }
+
+    // 2. RESOLVE HOST
+    if (typeof connectionConfig !== 'undefined' && connectionConfig.baseIp) {
+        // This will now correctly return "" if external is selected but empty
+        HOST = buildWebUIUrl(); 
     } else {
+        // Legacy fallback
         const legacyField = document.getElementById('hostIp');
-        if (legacyField) {
-            HOST = legacyField.value.replace(/\/$/, "");
-        } else if (localStorage.getItem('bojroHostIp')) {
-            HOST = localStorage.getItem('bojroHostIp');
-        }
+        if (legacyField) HOST = legacyField.value.replace(/\/$/, "");
+        else if (localStorage.getItem('bojroHostIp')) HOST = localStorage.getItem('bojroHostIp');
+    }
+
+    // 3. VALIDATE HOST (Prevents the "Empty URL" Hang)
+    // If the URL is empty, stop immediately. Do not try to fetch.
+    if (!HOST || HOST.trim() === "") {
+        if (!silent) alert("Connection Error: No URL found. Please check your External/Local settings.");
+        return;
     }
     
     // TARGET THE BRICK BUTTON
     const btn = document.getElementById('initEngineBtn');
 
-    // Visual State 1: Connecting (Green Wireframe Pulse)
+    // Visual State 1: Connecting
     if (btn) {
-        // Reset previous states
         btn.classList.remove('active'); 
-        
         if (!silent) {
-            // Use Lucide Icon instead of Emoji
             btn.innerHTML = `<i data-lucide="cloud-lightning"></i> INITIALIZING...`;
             btn.classList.add('connecting'); 
             if(window.lucide) lucide.createIcons();
@@ -54,22 +164,40 @@ window.connect = async function(silent = false) {
     }
 
     try {
+        // 4. TIMEOUT FOR PERMISSIONS (Prevents Plugin Hang)
+        // If permissions take longer than 500ms, skip them and proceed to connect
         if (LocalNotifications && !silent) {
             try {
-                const perm = await LocalNotifications.requestPermissions();
-                if (perm.display === 'granted') await createNotificationChannel();
-            } catch(e) { console.warn("Notif perm failed", e); }
+                const permPromise = LocalNotifications.requestPermissions();
+                const timeoutPromise = new Promise(r => setTimeout(r, 500));
+                
+                // Race: Whichever finishes first wins
+                const result = await Promise.race([permPromise, timeoutPromise]);
+                
+                if (result && result.display === 'granted') {
+                    // Fire-and-forget the channel creation
+                    createNotificationChannel().catch(e => console.warn(e));
+                }
+            } catch(e) { console.warn("Notif perm skipped", e); }
         }
 
+        // 5. TIMEOUT FOR CONNECTION (Prevents Network Hang)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 Second Timeout
+
         const res = await fetch(`${HOST}/sdapi/v1/sd-models`, {
-            headers: getHeaders()
+            headers: getHeaders(),
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId); // Clear timeout if successful
+
         if (!res.ok) throw new Error("Status " + res.status);
 
-        // Visual State 2: Success (Orange Industrial Neon)
+        // Visual State 2: Success
         if (btn) {
-            btn.classList.remove('connecting'); // Stop Green Pulse
-            btn.classList.add('active');        // Start Orange Neon
+            btn.classList.remove('connecting');
+            btn.classList.add('active');
             btn.innerHTML = `<i data-lucide="zap"></i> INITIALIZED`;
             if(window.lucide) lucide.createIcons();
         }
@@ -78,15 +206,14 @@ window.connect = async function(silent = false) {
         const genBtn = document.getElementById('genBtn');
         if(genBtn) genBtn.disabled = false;
 
-        // Fetch all resources including Upscalers for High-Res Fix
         await Promise.all([fetchModels(), fetchSamplers(), fetchVaes(), fetchUpscalers()]);
 
-        if (!silent)
-            if (Toast) Toast.show({
-                text: 'Engine Linked Successfully',
-                duration: 'short',
-                position: 'center'
-            });
+        if (!silent && Toast) Toast.show({
+            text: 'Engine Linked',
+            duration: 'short',
+            position: 'center'
+        });
+
     } catch (e) {
         // Visual State 3: Failure
         if (btn) {
@@ -97,9 +224,13 @@ window.connect = async function(silent = false) {
                 btn.innerHTML = `<i data-lucide="x-circle"></i> FAILED`;
                 if(window.lucide) lucide.createIcons();
                 
-                alert("Failed: " + e.message);
+                // Readable Error Messages
+                let msg = e.message;
+                if (e.name === 'AbortError') msg = "Connection Timed Out";
+                else if (e.message.includes("Failed to fetch")) msg = "Host Unreachable";
                 
-                // Revert to Idle text after 2s
+                alert("Failed: " + msg);
+                
                 setTimeout(() => {
                     btn.innerHTML = `<i data-lucide="zap-off"></i> INITIALIZE ENGINE`;
                     if(window.lucide) lucide.createIcons();
@@ -312,39 +443,37 @@ function getLlmConfig() {
     let model = "";
 
     // 1. Base URL
-    if (connectionConfig && connectionConfig.baseIp) {
+    // Only try to build URL if we are Local (baseIp exists) OR if connectionConfig logic allows it.
+    // Since we disabled buildLlmUrl for Remote, this will return "" in remote mode.
+    if (connectionConfig && typeof buildLlmUrl === 'function') {
         baseUrl = buildLlmUrl();
-    } else if (document.getElementById('llmApiBase')) {
+    }
+    
+    // Fallbacks
+    if (!baseUrl && document.getElementById('llmApiBase')) {
         baseUrl = document.getElementById('llmApiBase').value.replace(/\/$/, "");
-    } else if (llmSettings && llmSettings.baseUrl) {
+    } else if (!baseUrl && llmSettings && llmSettings.baseUrl) {
         baseUrl = llmSettings.baseUrl;
     }
 
-    // 2. API Key
-    if (document.getElementById('llmApiKey')) {
-        key = document.getElementById('llmApiKey').value;
-    } else if (llmSettings && llmSettings.key) {
-        key = llmSettings.key;
-    }
+    // ... key and model logic remains the same ...
+    if (document.getElementById('llmApiKey')) key = document.getElementById('llmApiKey').value;
+    else if (llmSettings && llmSettings.key) key = llmSettings.key;
 
-    // 3. Model
-    if (document.getElementById('llmModelSelect')) {
-        model = document.getElementById('llmModelSelect').value;
-    } else if (llmSettings && llmSettings.model) {
-        model = llmSettings.model;
-    }
+    if (document.getElementById('llmModelSelect')) model = document.getElementById('llmModelSelect').value;
+    else if (llmSettings && llmSettings.model) model = llmSettings.model;
 
     return { baseUrl, key, model };
 }
 
 window.connectToLlm = async function() {
-    if (!CapacitorHttp) return alert("Native HTTP Plugin not loaded! Rebuild App.");
+    // We check CapacitorHttp existence, but we will use fetch() to trigger the proxy
+    if (!window.Capacitor || !window.Capacitor.Plugins.CapacitorHttp) return alert("Native HTTP Plugin not loaded! Rebuild App.");
     
     const { baseUrl, key } = getLlmConfig();
     
     if (!baseUrl) return alert("Enter Server URL first");
 
-    // Try to find the button, but don't crash if missing
     const btn = event ? event.target : null;
     let originalText = "";
     if (btn) {
@@ -359,13 +488,17 @@ window.connectToLlm = async function() {
         };
         if (key) headers['Authorization'] = `Bearer ${key}`;
         
-        const response = await CapacitorHttp.get({
-            url: `${baseUrl}/v1/models`,
+        // --- FIXED: Use fetch() instead of CapacitorHttp.get() ---
+        // This forces the request through the global proxy defined at the top,
+        // which adds the Cloudflare headers if needed.
+        const response = await fetch(`${baseUrl}/v1/models`, {
+            method: 'GET',
             headers: headers
         });
         
-        const data = response.data;
-        if (response.status >= 400) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json(); // fetch returns a response object, so we need .json()
         
         const select = document.getElementById('llmModelSelect');
         if (select && data.data && Array.isArray(data.data)) {
@@ -381,7 +514,6 @@ window.connectToLlm = async function() {
             throw new Error("Invalid model format");
         }
 
-        // Update global settings
         if (typeof saveLlmGlobalSettings === 'function') saveLlmGlobalSettings();
 
     } catch (e) {
@@ -395,7 +527,7 @@ window.connectToLlm = async function() {
 }
 
 window.generateLlmPrompt = async function() {
-    if (!CapacitorHttp) return alert("Native HTTP Plugin not loaded!");
+    if (!window.Capacitor || !window.Capacitor.Plugins.CapacitorHttp) return alert("Native HTTP Plugin not loaded!");
     
     const btn = document.getElementById('llmGenerateBtn');
     const inputEl = document.getElementById('llmInput');
@@ -434,15 +566,18 @@ window.generateLlmPrompt = async function() {
         const headers = { 'Content-Type': 'application/json' };
         if (key) headers['Authorization'] = `Bearer ${key}`;
         
-        const response = await CapacitorHttp.post({
-            url: `${baseUrl}/v1/chat/completions`,
+        // --- FIXED: Use fetch() instead of CapacitorHttp.post() ---
+        // This ensures headers are injected by the proxy.
+        const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+            method: 'POST',
             headers: headers,
-            data: payload
+            body: JSON.stringify(payload)
         });
         
-        if (response.status >= 400) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
-        const data = response.data;
+        const data = await response.json(); // fetch returns a response object, so we need .json()
+
         let result = "";
         if (data.choices && data.choices[0] && data.choices[0].message) {
             result = data.choices[0].message.content;

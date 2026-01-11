@@ -490,11 +490,8 @@ window.initGlobalUiState = function() {
     initGenericSection('grp-flux-trident', 'arr-flux-trident', 'bojro_vis_flux_trident');
     initGenericSection('grp-qwen-modules', 'arr-qwen-modules', 'bojro_vis_qwen_modules');
     initGenericSection('fbc-settings-content', 'fbc-arrow', 'bojro_vis_fbc');
-    
-    // --- ADDED: CFG PERSISTENCE INIT ---
+    // --- UPDATED ---
     initGenericSection('cfg-appearance', 'arr-cfg-app', 'bojro_vis_cfg_app');
-    initGenericSection('cfg-base-link', 'arr-cfg-base', 'bojro_vis_cfg_base');
-    initGenericSection('cfg-ports', 'arr-cfg-ports', 'bojro_vis_cfg_ports');
     initGenericSection('cfg-ui', 'arr-cfg-ui', 'bojro_vis_cfg_ui');
     initGenericSectionClosed('cfg-sys', 'arr-cfg-sys', 'bojro_vis_cfg_sys');
 }

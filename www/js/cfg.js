@@ -9,27 +9,60 @@ function loadConnectionConfig() {
         connectionConfig = { ...connectionConfig, ...JSON.parse(saved) };
     }
     
-    // Update UI fields
-    const elBase = document.getElementById('cfgBaseIp');
-    if (elBase) elBase.value = connectionConfig.baseIp || '';
-    
-    const elWeb = document.getElementById('cfgPortWebUI');
-    if (elWeb) elWeb.value = connectionConfig.portWebUI || 7860;
-    
-    const elLlm = document.getElementById('cfgPortLlm');
-    if (elLlm) elLlm.value = connectionConfig.portLlm || 1234;
-    
-    const elWake = document.getElementById('cfgPortWake');
-    if (elWake) elWake.value = connectionConfig.portWake || 5000;
+    // 1. Load Local Inputs
+    if (document.getElementById('cfgBaseIp')) document.getElementById('cfgBaseIp').value = connectionConfig.baseIp || '';
+    if (document.getElementById('cfgPortWebUI')) document.getElementById('cfgPortWebUI').value = connectionConfig.portWebUI || 7860;
+    if (document.getElementById('cfgPortLlm')) document.getElementById('cfgPortLlm').value = connectionConfig.portLlm || 1234;
+    if (document.getElementById('cfgPortWake')) document.getElementById('cfgPortWake').value = connectionConfig.portWake || 5000;
+    if (document.getElementById('cfgPortComfy')) document.getElementById('cfgPortComfy').value = connectionConfig.portComfy || 8188;
 
-    // NEW: Comfy Port
-    const elComfy = document.getElementById('cfgPortComfy');
-    if (elComfy) elComfy.value = connectionConfig.portComfy || 8188;
+    // 2. Load External Inputs (UPDATED: Only Forge and Wake)
+    if (document.getElementById('extUrlForge')) document.getElementById('extUrlForge').value = connectionConfig.extForge || '';
+    if (document.getElementById('extUrlWake')) document.getElementById('extUrlWake').value = connectionConfig.extWake || '';
     
-    // Update Toggle Switch for Remote/External Mode
+    // Cloudflare inputs
+    if (document.getElementById('cfgCloudflareSwitch')) {
+        document.getElementById('cfgCloudflareSwitch').checked = connectionConfig.isCloudflare || false;
+        toggleCloudflareUI();
+    }
+    if (document.getElementById('cfgCfClientId')) document.getElementById('cfgCfClientId').value = connectionConfig.cfClientId || '';
+    if (document.getElementById('cfgCfClientSecret')) document.getElementById('cfgCfClientSecret').value = connectionConfig.cfClientSecret || '';
+    
+    // 3. Update Toggle Switch
     const elMode = document.getElementById('cfgModeSwitch');
     if (elMode) {
         elMode.checked = connectionConfig.isRemote || false;
+        elMode.addEventListener('change', toggleConnectionModeUI);
+        toggleConnectionModeUI(); 
+    }
+}
+
+// NEW: Helper to toggle UI visibility
+function toggleConnectionModeUI() {
+    const isRemote = document.getElementById('cfgModeSwitch').checked;
+    if (typeof connectionConfig !== 'undefined') {
+        connectionConfig.isRemote = isRemote;
+        if (typeof buildWebUIUrl === 'function') {
+            HOST = buildWebUIUrl();
+        }
+        }
+
+
+    const localCont = document.getElementById('container-local');
+    const extCont = document.getElementById('container-external');
+    const label = document.getElementById('modeLabel');
+
+
+    if (isRemote) {
+        localCont.classList.add('hidden');
+        extCont.classList.remove('hidden');
+        if(label) label.innerText = "EXTERNAL (TUNNEL)";
+        if(label) label.style.color = "var(--accent-primary)";
+    } else {
+        localCont.classList.remove('hidden');
+        extCont.classList.add('hidden');
+        if(label) label.innerText = "LOCAL NETWORK";
+        if(label) label.style.color = "var(--text-muted)";
     }
 }
 
@@ -38,62 +71,37 @@ function saveConnectionConfig() {
     localStorage.setItem('bojroConnectionConfig', JSON.stringify(connectionConfig));
 }
 
-// Helper to construct URLs based on Mode (Local vs External)
-function constructServiceUrl(port) {
-    if (!connectionConfig.baseIp) return '';
-    
-    let url = connectionConfig.baseIp.trim();
-    
-    // Clean up trailing slash just in case
-    url = url.replace(/\/$/, "");
-
-    if (connectionConfig.isRemote) {
-        // --- EXTERNAL MODE (HTTPS, Ignore Ports) ---
-        
-        // Ensure protocol is HTTPS
-        if (url.startsWith("http://")) {
-            url = url.replace("http://", "https://");
-        } else if (!url.startsWith("https://")) {
-            url = "https://" + url;
-        }
-        
-        // Return strictly the URL (ngrok/cloud usually handles routing without ports)
-        return url;
-
-    } else {
-        // --- LOCAL MODE (HTTP, Append Port) ---
-        
-        // Strip any existing protocol to ensure we force HTTP
-        url = url.replace(/^https?:\/\//, '');
-        
-        // Ensure Port is appended
-        // We check if the remaining string already has a port (contains a colon)
-        // logic: 192.168.1.5 -> no colon -> add port
-        // logic: 192.168.1.5:8888 -> has colon -> keep existing
-        if (port && !url.includes(':')) {
-            url += `:${port}`;
-        }
-        
-        return `http://${url}`;
-    }
-}
-
 // Build full URLs from base IP and ports
 function buildWebUIUrl() {
-    return constructServiceUrl(connectionConfig.portWebUI || 7860);
+    if (connectionConfig.isRemote) return connectionConfig.extForge || "";
+    return constructLocalUrl(connectionConfig.portWebUI || 7860);
+}
+
+function buildComfyUrl() {
+    if (connectionConfig.isRemote) return ""; 
+    return constructLocalUrl(connectionConfig.portComfy || 8188);
 }
 
 function buildLlmUrl() {
-    return constructServiceUrl(connectionConfig.portLlm || 1234);
+    if (connectionConfig.isRemote) return "";
+    return constructLocalUrl(connectionConfig.portLlm || 1234);
 }
 
 function buildWakeUrl() {
-    return constructServiceUrl(connectionConfig.portWake || 5000);
+    if (connectionConfig.isRemote) return connectionConfig.extWake || "";
+    return constructLocalUrl(connectionConfig.portWake || 5000);
 }
 
-// NEW: Comfy URL Builder
-function buildComfyUrl() {
-    return constructServiceUrl(connectionConfig.portComfy || 8188);
+function constructLocalUrl(port) {
+    if (!connectionConfig.baseIp) return '';
+    let url = connectionConfig.baseIp.trim();
+    url = url.replace(/\/$/, ""); // Remove trailing slash
+    url = url.replace(/^https?:\/\//, ''); // Remove protocol
+    
+    if (port && !url.includes(':')) {
+        url += `:${port}`;
+    }
+    return `http://${url}`;
 }
 
 // Update connection status display
@@ -162,77 +170,68 @@ function updateConnectionStatus(service, status) {
 
 // Settings page functions
 window.saveConfiguration = function() {
+    // Read Local Values
     const baseIp = document.getElementById('cfgBaseIp').value.trim();
     const isRemote = document.getElementById('cfgModeSwitch').checked;
+    const portWebUI = document.getElementById('cfgPortWebUI').value;
+    const portLlm = document.getElementById('cfgPortLlm').value;
+    const portWake = document.getElementById('cfgPortWake').value;
+    const portComfy = document.getElementById('cfgPortComfy').value;
     
-    const portWebUI = document.getElementById('cfgPortWebUI').value ? parseInt(document.getElementById('cfgPortWebUI').value) : '';
-    const portLlm = document.getElementById('cfgPortLlm').value ? parseInt(document.getElementById('cfgPortLlm').value) : '';
-    const portWake = document.getElementById('cfgPortWake').value ? parseInt(document.getElementById('cfgPortWake').value) : '';
-    const portComfy = document.getElementById('cfgPortComfy').value ? parseInt(document.getElementById('cfgPortComfy').value) : ''; // NEW
-    
-    // Validation
-    if (!baseIp) {
-        alert('Please enter an IP address or URL');
-        return;
-    }
-    
-    if (portWebUI && (isNaN(portWebUI) || portWebUI < 1 || portWebUI > 65535)) {
-        alert('Please enter a valid WebUI port (1-65535)');
-        return;
-    }
-    
-    if (portLlm && (isNaN(portLlm) || portLlm < 1 || portLlm > 65535)) {
-        alert('Please enter a valid LLM port (1-65535)');
-        return;
-    }
-    
-    if (portWake && (isNaN(portWake) || portWake < 1 || portWake > 65535)) {
-        alert('Please enter a valid Wake port (1-65535)');
-        return;
-    }
+    // Read External Values (UPDATED: Only Forge and Wake)
+    const extForge = document.getElementById('extUrlForge').value.trim().replace(/\/$/, ""); 
+    const extWake = document.getElementById('extUrlWake').value.trim().replace(/\/$/, "");
 
-    if (portComfy && (isNaN(portComfy) || portComfy < 1 || portComfy > 65535)) {
-        alert('Please enter a valid Comfy port (1-65535)');
-        return;
-    }
-    
-    // Save configuration
+    // Cloudflare Values
+    const isCloudflare = document.getElementById('cfgCloudflareSwitch').checked;
+    const cfClientId = document.getElementById('cfgCfClientId').value.trim();
+    const cfClientSecret = document.getElementById('cfgCfClientSecret').value.trim();
+
+    // Save to Config Object
     connectionConfig.baseIp = baseIp;
-    connectionConfig.isRemote = isRemote; 
-    connectionConfig.portWebUI = portWebUI !== '' ? portWebUI : null; 
-    connectionConfig.portLlm = portLlm !== '' ? portLlm : null;    
-    connectionConfig.portWake = portWake !== '' ? portWake : null;
-    connectionConfig.portComfy = portComfy !== '' ? portComfy : null; // NEW
+    connectionConfig.isRemote = isRemote;
+    connectionConfig.portWebUI = portWebUI;
+    connectionConfig.portLlm = portLlm;
+    connectionConfig.portWake = portWake;
+    connectionConfig.portComfy = portComfy;
+    
+    // Save New Fields
+    connectionConfig.extForge = extForge;
+    connectionConfig.extWake = extWake;
+    // We clear Comfy/LLM external configs since they are removed
+    connectionConfig.extComfy = "";
+    connectionConfig.extLlm = "";
+    
+    connectionConfig.isCloudflare = isCloudflare;
+    connectionConfig.cfClientId = cfClientId;
+    connectionConfig.cfClientSecret = cfClientSecret;
+
     connectionConfig.isConfigured = true;
     
     saveConnectionConfig();
     
-    // Update global HOST variable
+    // Update Global HOST
     HOST = buildWebUIUrl();
-    
-    // Update legacy localStorage keys for backward compatibility
     localStorage.setItem('bojroHostIp', HOST);
-    localStorage.setItem('bojro_power_ip', buildWakeUrl());
     
-    // Also update Comfy Host immediately if using centralized config
+    // Comfy is Local Only now, or empty if remote
     const comfyUrl = buildComfyUrl();
-    localStorage.setItem('comfyHost', comfyUrl.replace('http://','').replace('https://',''));
+    if (comfyUrl) {
+        localStorage.setItem('comfyHost', comfyUrl.replace('http://','').replace('https://',''));
+    }
 
-    if (Toast) Toast.show({
-        text: 'Configuration Saved Successfully',
-        duration: 'short'
-    });
-    
-    // Switch to GEN tab
+    if (Toast) Toast.show({ text: 'Configuration Saved', duration: 'short' });
     switchTab('gen');
 }
 
+// www/js/cfg.js
+
 window.resetAppConfig = function() {
-    if (confirm('Reset all app configuration? This will clear all saved settings and return to the first-time setup.')) {
-        // Clear connection config
-        localStorage.removeItem('bojroConnectionConfig');
+    // 1. Ask the user for confirmation
+    if (confirm('Reset all app configuration? This will clear settings AND remove downloaded updates.')) {
         
-        // Clear legacy keys
+        // 2. Clear all saved data
+        localStorage.removeItem('bojroConnectionConfig');
         localStorage.removeItem('bojroHostIp');
         localStorage.removeItem('bojro_power_ip');
         localStorage.removeItem('bojroLlmConfig');
@@ -240,7 +239,7 @@ window.resetAppConfig = function() {
         localStorage.removeItem('bojro_model_visibility'); 
         localStorage.removeItem('comfyHost');
         
-        // Reset global variables
+        // 3. Reset variables
         connectionConfig = {
             baseIp: "",
             portWebUI: 7860,
@@ -250,19 +249,15 @@ window.resetAppConfig = function() {
             isRemote: false,
             isConfigured: false
         };
-        
         HOST = "";
         
-        // Reset UI
-        loadConnectionConfig();
-        
-        // Switch to CFG tab
-        switchTab('cfg');
-        
-        if (Toast) Toast.show({
-            text: 'Configuration Reset',
-            duration: 'short'
-        });
+        // 4. CRITICAL FIX: Reset the Native Updater
+        // This deletes the "stuck" update file and forces the app to use your new code
+        if (window.resetNativeUpdater) {
+             window.resetNativeUpdater(); 
+        } else {
+             window.location.reload();
+        }
     }
 }
 
@@ -492,4 +487,13 @@ function applyModelVisibility(config) {
     if (btnQwen) config.qwen ? btnQwen.classList.remove('hidden') : btnQwen.classList.add('hidden');
     
     if (dockComfy) config.comfy ? dockComfy.classList.remove('hidden') : dockComfy.classList.add('hidden');
+}
+
+window.toggleCloudflareUI = function() {
+    const isOn = document.getElementById('cfgCloudflareSwitch').checked;
+    const cont = document.getElementById('container-cloudflare');
+    if (cont) {
+        if(isOn) cont.classList.remove('hidden');
+        else cont.classList.add('hidden');
+    }
 }

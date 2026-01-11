@@ -863,43 +863,87 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="glass-box">
-                    <div class="row" onclick="toggleGeneric('cfg-base-link', 'arr-cfg-base', 'bojro_vis_cfg_base')" style="justify-content:space-between; cursor:pointer; margin-bottom:5px;">
-                        <label style="cursor:pointer;"><i data-lucide="monitor" size="12"></i> PC ENGINE LINK</label>
-                        <i id="arr-cfg-base" data-lucide="chevron-down" size="14" style="transition: transform 0.2s;"></i>
-                    </div>
-                    <div id="cfg-base-link" class="col" style="gap: 12px; padding: 10px 0;">
-                        <div class="row" style="justify-content: space-between; align-items: center; padding: 5px 0 10px 0;">
-                            <label for="cfgModeSwitch" style="margin: 0; color: var(--text-main); font-size: 13px;">External Link Toggle</label>
+                    <div class="row" style="justify-content:space-between; align-items:center;">
+                        <label style="cursor:pointer; font-weight:900; color:var(--accent-primary);"><i data-lucide="globe" size="14"></i> CONNECTION MODE</label>
+                        <div class="row" style="width:auto; gap:10px; align-items: center;">
+                            <span id="modeLabel" style="font-size:10px; color:var(--text-muted);">LOCAL</span>
                             <input type="checkbox" id="cfgModeSwitch" class="bojro-switch">
                         </div>
-                        <input type="text" id="cfgBaseIp" placeholder="http://... or https://..." style="font-family: monospace;">
-                        <p style="font-size: 10px; color: var(--text-muted); margin: 0;">Enter IP http (local) or full https URL (external).</p>
+                    </div>
+                    <p style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">
+                        Toggle ON if you are away from home (using Ngrok/Tunnel).
+                    </p>
+                </div>
+
+                <div id="container-local">
+                    <div class="glass-box">
+                        <label><i data-lucide="wifi" size="12"></i> LOCAL IP ADDRESS</label>
+                        <input type="text" id="cfgBaseIp" placeholder="http://192.168.1.X" style="font-family: monospace;">
+                    </div>
+
+                    <div class="glass-box">
+                        <label><i data-lucide="server" size="12"></i> LOCAL PORTS</label>
+                        <div class="col" style="gap: 12px; padding: 10px 0;">
+                            <div class="row" style="align-items: center; gap: 10px;">
+                                <label style="margin: 0; min-width: 60px;">WebUI</label>
+                                <input type="number" id="cfgPortWebUI" value="7860" style="flex: 1; font-family: monospace;">
+                            </div>
+                            <div class="row" style="align-items: center; gap: 10px;">
+                                <label style="margin: 0; min-width: 60px;">Comfy</label>
+                                <input type="number" id="cfgPortComfy" value="8188" style="flex: 1; font-family: monospace;">
+                            </div>
+                            <div class="row" style="align-items: center; gap: 10px;">
+                                <label style="margin: 0; min-width: 60px;">LLM</label>
+                                <input type="number" id="cfgPortLlm" value="1234" style="flex: 1; font-family: monospace;">
+                            </div>
+                            <div class="row" style="align-items: center; gap: 10px;">
+                                <label style="margin: 0; min-width: 60px;">Wake</label>
+                                <input type="number" id="cfgPortWake" value="5000" style="flex: 1; font-family: monospace;">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="glass-box">
-                    <div class="row" onclick="toggleGeneric('cfg-ports', 'arr-cfg-ports', 'bojro_vis_cfg_ports')" style="justify-content:space-between; cursor:pointer; margin-bottom:5px;">
-                        <label style="cursor:pointer;"><i data-lucide="server" size="12"></i> SERVICE PORTS</label>
-                        <i id="arr-cfg-ports" data-lucide="chevron-down" size="14" style="transition: transform 0.2s;"></i>
+                <div id="container-external" class="hidden">
+                    <div class="glass-box" style="border: 1px solid var(--accent-primary);">
+                        <label style="color:var(--accent-primary);"><i data-lucide="link" size="12"></i> EXTERNAL TUNNEL LINKS</label>
+                        <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 15px;">
+                            Enter the full public URL for each service (e.g., https://my-app.ngrok-free.app).
+                        </p>
+
+                        <div class="col" style="gap: 15px;">
+                            <div class="col">
+                                <label>SD WebUI Forge URL</label>
+                                <input type="text" id="extUrlForge" placeholder="https://..." style="font-family: monospace;">
+                            </div>
+                            
+                            <div class="col">
+                                <label>Wake Service URL</label>
+                                <input type="text" id="extUrlWake" placeholder="https://..." style="font-family: monospace;">
+                            </div>
+                        </div>
                     </div>
-                    <div id="cfg-ports" class="col" style="gap: 12px; padding: 10px 0;">
-                        <div class="row" style="align-items: center; gap: 10px;">
-                            <label style="margin: 0; min-width: 60px;">WebUI</label>
-                            <input type="number" id="cfgPortWebUI" value="7860" style="flex: 1; font-family: monospace;">
+                    <div class="glass-box" style="margin-top: 10px; border: 1px solid #f48fb1;">
+                        <div class="row" style="justify-content:space-between; align-items:center;">
+                            <label style="color:#f48fb1; font-weight:900;"><i data-lucide="shield-check" size="14"></i> CLOUDFLARE ZERO TRUST</label>
+                            <input type="checkbox" id="cfgCloudflareSwitch" class="bojro-switch" onchange="toggleCloudflareUI()">
                         </div>
-                        <div class="row" style="align-items: center; gap: 10px;">
-                            <label style="margin: 0; min-width: 60px;">LLM</label>
-                            <input type="number" id="cfgPortLlm" value="1234" style="flex: 1; font-family: monospace;">
-                        </div>
-                        <div class="row" style="align-items: center; gap: 10px;">
-                            <label style="margin: 0; min-width: 60px;">Wake</label>
-                            <input type="number" id="cfgPortWake" value="5000" style="flex: 1; font-family: monospace;">
-                        </div>
-                        <div class="row" style="align-items: center; gap: 10px;">
-                            <label style="margin: 0; min-width: 60px;">Comfy</label>
-                            <input type="number" id="cfgPortComfy" value="8188" style="flex: 1; font-family: monospace;">
+                        
+                        <div id="container-cloudflare" class="hidden" style="margin-top:10px; border-top:1px solid rgba(244, 143, 177, 0.3); padding-top:10px;">
+                            <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 10px;">
+                                Bypasses CORS and injects Service Tokens for protected backends.
+                            </p>
+                            <div class="col" style="gap: 10px;">
+                                <div class="col">
+                                    <label>CF-Access-Client-Id</label>
+                                    <input type="text" id="cfgCfClientId" placeholder="Paste Client ID..." style="font-family: monospace;">
+                                </div>
+                                <div class="col">
+                                    <label>CF-Access-Client-Secret</label>
+                                    <input type="password" id="cfgCfClientSecret" placeholder="Paste Secret..." style="font-family: monospace;">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -951,7 +995,7 @@
                     <i data-lucide="save" size="16" style="vertical-align: -3px; margin-right: 8px;"></i> SAVE CONFIGURATION
                 </button>
                 
-                <div class="cfg-badge" style="text-align: center; color: var(--text-muted); font-size: 10px; margin-top: 20px; opacity: 0.6; letter-spacing: 1px; text-transform: uppercase;">Resolver Client v1.5 (Ota Up-v1.6) • GPLv3 License</div>
+                <div class="cfg-badge" style="text-align: center; color: var(--text-muted); font-size: 10px; margin-top: 20px; opacity: 0.6; letter-spacing: 1px; text-transform: uppercase;">Resolver Client v1.5 (Ota Up-v1.7) • GPLv3 License</div>
             </div>
             </div>
     </div>
@@ -1235,7 +1279,7 @@
                 <i data-lucide="sparkles" size="32" style="color: var(--accent-primary);"></i>
             </div>
             <h3 style="margin: 0; font-size: 18px; color: #fff;">Update Available</h3>
-            <div id="updateVersionBadge" style="display: inline-block; background: var(--accent-gradient); color: white; font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-top: 6px;">v1.6</div>
+            <div id="updateVersionBadge" style="display: inline-block; background: var(--accent-gradient); color: white; font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-top: 6px;">v1.7</div>
         </div>
 
         <div class="glass-box" style="text-align: left; padding: 12px; margin-bottom: 20px; max-height: 180px; overflow-y: auto; background: rgba(0,0,0,0.3);">
