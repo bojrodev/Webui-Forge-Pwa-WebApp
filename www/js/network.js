@@ -66,7 +66,7 @@ async function performNativeRequest(url, options = {}) {
 // 3. Global Override Logic
 window.fetch = async function(input, init) {
     // A. VALIDATION CHECK: Only run if Remote + Cloudflare are ON
-    if (typeof connectionConfig === 'undefined' || !connectionConfig.isRemote || !connectionConfig.isCloudflare) {
+    if (typeof connectionConfig === 'undefined' || !connectionConfig.isRemote) {
         return window.originalFetch(input, init);
     }
 
@@ -86,8 +86,6 @@ window.fetch = async function(input, init) {
     // B. TARGET FILTERING: Only proxy configured external URLs
     const targetHosts = [
         connectionConfig.extForge, 
-        connectionConfig.extComfy, 
-        connectionConfig.extLlm, 
         connectionConfig.extWake
     ].filter(h => h && h.length > 0);
 
@@ -445,39 +443,37 @@ function getLlmConfig() {
     let model = "";
 
     // 1. Base URL
-    if (connectionConfig && connectionConfig.baseIp) {
+    // Only try to build URL if we are Local (baseIp exists) OR if connectionConfig logic allows it.
+    // Since we disabled buildLlmUrl for Remote, this will return "" in remote mode.
+    if (connectionConfig && typeof buildLlmUrl === 'function') {
         baseUrl = buildLlmUrl();
-    } else if (document.getElementById('llmApiBase')) {
+    }
+    
+    // Fallbacks
+    if (!baseUrl && document.getElementById('llmApiBase')) {
         baseUrl = document.getElementById('llmApiBase').value.replace(/\/$/, "");
-    } else if (llmSettings && llmSettings.baseUrl) {
+    } else if (!baseUrl && llmSettings && llmSettings.baseUrl) {
         baseUrl = llmSettings.baseUrl;
     }
 
-    // 2. API Key
-    if (document.getElementById('llmApiKey')) {
-        key = document.getElementById('llmApiKey').value;
-    } else if (llmSettings && llmSettings.key) {
-        key = llmSettings.key;
-    }
+    // ... key and model logic remains the same ...
+    if (document.getElementById('llmApiKey')) key = document.getElementById('llmApiKey').value;
+    else if (llmSettings && llmSettings.key) key = llmSettings.key;
 
-    // 3. Model
-    if (document.getElementById('llmModelSelect')) {
-        model = document.getElementById('llmModelSelect').value;
-    } else if (llmSettings && llmSettings.model) {
-        model = llmSettings.model;
-    }
+    if (document.getElementById('llmModelSelect')) model = document.getElementById('llmModelSelect').value;
+    else if (llmSettings && llmSettings.model) model = llmSettings.model;
 
     return { baseUrl, key, model };
 }
 
 window.connectToLlm = async function() {
-    if (!CapacitorHttp) return alert("Native HTTP Plugin not loaded! Rebuild App.");
+    // We check CapacitorHttp existence, but we will use fetch() to trigger the proxy
+    if (!window.Capacitor || !window.Capacitor.Plugins.CapacitorHttp) return alert("Native HTTP Plugin not loaded! Rebuild App.");
     
     const { baseUrl, key } = getLlmConfig();
     
     if (!baseUrl) return alert("Enter Server URL first");
 
-    // Try to find the button, but don't crash if missing
     const btn = event ? event.target : null;
     let originalText = "";
     if (btn) {
@@ -492,13 +488,17 @@ window.connectToLlm = async function() {
         };
         if (key) headers['Authorization'] = `Bearer ${key}`;
         
-        const response = await CapacitorHttp.get({
-            url: `${baseUrl}/v1/models`,
+        // --- FIXED: Use fetch() instead of CapacitorHttp.get() ---
+        // This forces the request through the global proxy defined at the top,
+        // which adds the Cloudflare headers if needed.
+        const response = await fetch(`${baseUrl}/v1/models`, {
+            method: 'GET',
             headers: headers
         });
         
-        const data = response.data;
-        if (response.status >= 400) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json(); // fetch returns a response object, so we need .json()
         
         const select = document.getElementById('llmModelSelect');
         if (select && data.data && Array.isArray(data.data)) {
@@ -514,7 +514,6 @@ window.connectToLlm = async function() {
             throw new Error("Invalid model format");
         }
 
-        // Update global settings
         if (typeof saveLlmGlobalSettings === 'function') saveLlmGlobalSettings();
 
     } catch (e) {
@@ -528,7 +527,7 @@ window.connectToLlm = async function() {
 }
 
 window.generateLlmPrompt = async function() {
-    if (!CapacitorHttp) return alert("Native HTTP Plugin not loaded!");
+    if (!window.Capacitor || !window.Capacitor.Plugins.CapacitorHttp) return alert("Native HTTP Plugin not loaded!");
     
     const btn = document.getElementById('llmGenerateBtn');
     const inputEl = document.getElementById('llmInput');
@@ -567,15 +566,18 @@ window.generateLlmPrompt = async function() {
         const headers = { 'Content-Type': 'application/json' };
         if (key) headers['Authorization'] = `Bearer ${key}`;
         
-        const response = await CapacitorHttp.post({
-            url: `${baseUrl}/v1/chat/completions`,
+        // --- FIXED: Use fetch() instead of CapacitorHttp.post() ---
+        // This ensures headers are injected by the proxy.
+        const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+            method: 'POST',
             headers: headers,
-            data: payload
+            body: JSON.stringify(payload)
         });
         
-        if (response.status >= 400) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
-        const data = response.data;
+        const data = await response.json(); // fetch returns a response object, so we need .json()
+
         let result = "";
         if (data.choices && data.choices[0] && data.choices[0].message) {
             result = data.choices[0].message.content;

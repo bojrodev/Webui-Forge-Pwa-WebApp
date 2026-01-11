@@ -16,11 +16,11 @@ function loadConnectionConfig() {
     if (document.getElementById('cfgPortWake')) document.getElementById('cfgPortWake').value = connectionConfig.portWake || 5000;
     if (document.getElementById('cfgPortComfy')) document.getElementById('cfgPortComfy').value = connectionConfig.portComfy || 8188;
 
-    // 2. Load External Inputs (NEW)
+    // 2. Load External Inputs (UPDATED: Only Forge and Wake)
     if (document.getElementById('extUrlForge')) document.getElementById('extUrlForge').value = connectionConfig.extForge || '';
-    if (document.getElementById('extUrlComfy')) document.getElementById('extUrlComfy').value = connectionConfig.extComfy || '';
-    if (document.getElementById('extUrlLlm')) document.getElementById('extUrlLlm').value = connectionConfig.extLlm || '';
     if (document.getElementById('extUrlWake')) document.getElementById('extUrlWake').value = connectionConfig.extWake || '';
+    
+    // Cloudflare inputs
     if (document.getElementById('cfgCloudflareSwitch')) {
         document.getElementById('cfgCloudflareSwitch').checked = connectionConfig.isCloudflare || false;
         toggleCloudflareUI();
@@ -32,9 +32,7 @@ function loadConnectionConfig() {
     const elMode = document.getElementById('cfgModeSwitch');
     if (elMode) {
         elMode.checked = connectionConfig.isRemote || false;
-        // Add listener immediately to handle UI switching
         elMode.addEventListener('change', toggleConnectionModeUI);
-        // Run once to set initial state
         toggleConnectionModeUI(); 
     }
 }
@@ -75,37 +73,23 @@ function saveConnectionConfig() {
 
 // Build full URLs from base IP and ports
 function buildWebUIUrl() {
-    if (connectionConfig.isRemote) {
-        // Return exact External URL
-        return connectionConfig.extForge || "";
-    } else {
-        // Return Local IP + Port
-        return constructLocalUrl(connectionConfig.portWebUI || 7860);
-    }
+    if (connectionConfig.isRemote) return connectionConfig.extForge || "";
+    return constructLocalUrl(connectionConfig.portWebUI || 7860);
 }
 
 function buildComfyUrl() {
-    if (connectionConfig.isRemote) {
-        return connectionConfig.extComfy || "";
-    } else {
-        return constructLocalUrl(connectionConfig.portComfy || 8188);
-    }
+    if (connectionConfig.isRemote) return ""; 
+    return constructLocalUrl(connectionConfig.portComfy || 8188);
 }
 
 function buildLlmUrl() {
-    if (connectionConfig.isRemote) {
-        return connectionConfig.extLlm || "";
-    } else {
-        return constructLocalUrl(connectionConfig.portLlm || 1234);
-    }
+    if (connectionConfig.isRemote) return "";
+    return constructLocalUrl(connectionConfig.portLlm || 1234);
 }
 
 function buildWakeUrl() {
-    if (connectionConfig.isRemote) {
-        return connectionConfig.extWake || "";
-    } else {
-        return constructLocalUrl(connectionConfig.portWake || 5000);
-    }
+    if (connectionConfig.isRemote) return connectionConfig.extWake || "";
+    return constructLocalUrl(connectionConfig.portWake || 5000);
 }
 
 function constructLocalUrl(port) {
@@ -194,17 +178,14 @@ window.saveConfiguration = function() {
     const portWake = document.getElementById('cfgPortWake').value;
     const portComfy = document.getElementById('cfgPortComfy').value;
     
-    // Read External Values (NEW)
+    // Read External Values (UPDATED: Only Forge and Wake)
     const extForge = document.getElementById('extUrlForge').value.trim().replace(/\/$/, ""); 
-    const extComfy = document.getElementById('extUrlComfy').value.trim().replace(/\/$/, "");
-    const extLlm = document.getElementById('extUrlLlm').value.trim().replace(/\/$/, "");
     const extWake = document.getElementById('extUrlWake').value.trim().replace(/\/$/, "");
 
-    // --- MISSING PART ADDED HERE ---
+    // Cloudflare Values
     const isCloudflare = document.getElementById('cfgCloudflareSwitch').checked;
     const cfClientId = document.getElementById('cfgCfClientId').value.trim();
     const cfClientSecret = document.getElementById('cfgCfClientSecret').value.trim();
-    // -------------------------------
 
     // Save to Config Object
     connectionConfig.baseIp = baseIp;
@@ -216,34 +197,41 @@ window.saveConfiguration = function() {
     
     // Save New Fields
     connectionConfig.extForge = extForge;
-    connectionConfig.extComfy = extComfy;
-    connectionConfig.extLlm = extLlm;
     connectionConfig.extWake = extWake;
+    // We clear Comfy/LLM external configs since they are removed
+    connectionConfig.extComfy = "";
+    connectionConfig.extLlm = "";
     
-    // Now these variables exist and can be saved safely:
     connectionConfig.isCloudflare = isCloudflare;
     connectionConfig.cfClientId = cfClientId;
     connectionConfig.cfClientSecret = cfClientSecret;
 
     connectionConfig.isConfigured = true;
     
-    saveConnectionConfig(); // Writes to localStorage
+    saveConnectionConfig();
     
-    // Update Global HOST immediately
+    // Update Global HOST
     HOST = buildWebUIUrl();
     localStorage.setItem('bojroHostIp', HOST);
-    localStorage.setItem('comfyHost', buildComfyUrl().replace('http://','').replace('https://',''));
+    
+    // Comfy is Local Only now, or empty if remote
+    const comfyUrl = buildComfyUrl();
+    if (comfyUrl) {
+        localStorage.setItem('comfyHost', comfyUrl.replace('http://','').replace('https://',''));
+    }
 
     if (Toast) Toast.show({ text: 'Configuration Saved', duration: 'short' });
     switchTab('gen');
 }
 
+// www/js/cfg.js
+
 window.resetAppConfig = function() {
-    if (confirm('Reset all app configuration? This will clear all saved settings and return to the first-time setup.')) {
-        // Clear connection config
-        localStorage.removeItem('bojroConnectionConfig');
+    // 1. Ask the user for confirmation
+    if (confirm('Reset all app configuration? This will clear settings AND remove downloaded updates.')) {
         
-        // Clear legacy keys
+        // 2. Clear all saved data
+        localStorage.removeItem('bojroConnectionConfig');
         localStorage.removeItem('bojroHostIp');
         localStorage.removeItem('bojro_power_ip');
         localStorage.removeItem('bojroLlmConfig');
@@ -251,7 +239,7 @@ window.resetAppConfig = function() {
         localStorage.removeItem('bojro_model_visibility'); 
         localStorage.removeItem('comfyHost');
         
-        // Reset global variables
+        // 3. Reset variables
         connectionConfig = {
             baseIp: "",
             portWebUI: 7860,
@@ -261,19 +249,15 @@ window.resetAppConfig = function() {
             isRemote: false,
             isConfigured: false
         };
-        
         HOST = "";
         
-        // Reset UI
-        loadConnectionConfig();
-        
-        // Switch to CFG tab
-        switchTab('cfg');
-        
-        if (Toast) Toast.show({
-            text: 'Configuration Reset',
-            duration: 'short'
-        });
+        // 4. CRITICAL FIX: Reset the Native Updater
+        // This deletes the "stuck" update file and forces the app to use your new code
+        if (window.resetNativeUpdater) {
+             window.resetNativeUpdater(); 
+        } else {
+             window.location.reload();
+        }
     }
 }
 
