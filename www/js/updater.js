@@ -43,10 +43,10 @@ async function checkForAppUpdate(silent = false) {
             Toast.show({text: 'Checking for updates...', duration: 'short'});
         }
 
-        const UPDATE_URL = 'https://raw.githubusercontent.com/bojrodev/Resolver-Stable-Diffusion-Client-for-android/dev/version.json';
+        const UPDATE_URL = 'https://raw.githubusercontent.com/bojrodev/Resolver-Stable-Diffusion-Client-for-android/dev/v2ersion.json';
         
         // IMPORTANT: Update this number manually when you release a new version
-        const currentVersion = '1.9'; 
+        const currentVersion = '2.0';
         // ---------------------
 
         const response = await fetch(UPDATE_URL + '?t=' + new Date().getTime());
